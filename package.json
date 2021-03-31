@@ -1,0 +1,17 @@
+{
+  "name": "fcore-ishell-nodejs",
+  "version": "1.0.0",
+  "description": "Template node app implementing Functional Core, Imperative Shell pattern",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "Gary Huong",
+  "license": "ISC",
+  "dependencies": {
+    "falafel": "^2.2.4"
+  },
+  "devDependencies": {
+    "jest": "^26.6.3"
+  }
+}
