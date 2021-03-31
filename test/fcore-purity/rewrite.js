@@ -3,6 +3,9 @@
 const fs = require("fs");
 const path = require("path");
 const falafel = require("falafel");
+const mkdirp = require("mkdirp");
+
+const config = require("./config");
 
 /**
  * Rewrite contents of input file to an output file, applying the following transformation:
@@ -14,11 +17,17 @@ const falafel = require("falafel");
  * @param {String} inputFilename path to input file
  * @param {String} outputFilename path to output file
  */
-function rewrite(inputFilename, outputFilename) {
+function rewrite(inputFilename, outputFilename, pureFunctions = []) {
   const source = fs.readFileSync(inputFilename, "utf8");
   const output = falafel(source, function (node) {
-    if (node.type === "BlockStatement" && node.parent.type === "FunctionDeclaration") {
-      const vars = node.parent.params.map(node => node.name);
+    if (
+      node.type === "BlockStatement" &&
+      node.parent.type === "FunctionDeclaration" &&
+      node.parent.id.name !== config.purityTests
+    ) {
+      const vars = node.parent.params
+        .map((node) => node.name)
+        .concat(pureFunctions);
       // wrap function in "use strict" closure
       const pre = '`(function (){\n"use strict"\nreturn (function () ';
       const post = "\n())}())`";
@@ -27,7 +36,7 @@ function rewrite(inputFilename, outputFilename) {
       const preVm =
         'const vm = require("vm")\nconst sandbox = {}\nvm.createContext(sandbox)\n const src = ';
       // add all arguments to the sandbox
-      var postVm = "";
+      let postVm = "";
       vars.forEach((name) => {
         postVm += "\nsandbox." + name + " = " + name;
       });
@@ -37,6 +46,7 @@ function rewrite(inputFilename, outputFilename) {
     }
   });
 
+  mkdirp.sync(path.dirname(outputFilename));
   fs.writeFileSync(outputFilename, output, "utf8");
 }
 

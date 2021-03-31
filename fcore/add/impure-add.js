@@ -1,5 +1,14 @@
+function launchNukes() {}
+
 function add(a, b) {
-  console.log("impure side-effect!");
+  launchNukes();
   return a + b;
 }
-module.exports = add;
+
+module.exports = {
+  add,
+  _purityTests: () => () => {
+    add(2, 3);
+    return add;
+  },
+};
