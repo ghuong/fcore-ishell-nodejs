@@ -6,64 +6,10 @@ const config = require("./config");
 const helper = require("./helper");
 
 describe("all function declarations exported from modules in 'fcore/'", () => {
-  /**
-   * Runs the purity tests in a given fcore module
-   * @param {String} file filename containing the fcore module
-   * @returns a an object { pureFunctions, numImpure }, where:
-   * pureFunctions : list of names of pure functions declared in the file
-   * errors : list of errors thrown in tests
-   */
-  function runPurityTests(file) {
-    const fcoreModule = require(file);
-    if (fcoreModule._purityTests.constructor !== Function)
-      throw new Error(`'${config.purityTests}' function missing. See docs.`);
 
-    let purityTests = fcoreModule._purityTests(); // get tests
-    if (purityTests.constructor === Function) purityTests = [purityTests]; // wrap in array
-
-    if (purityTests.constructor !== Array)
-      throw new TypeError(
-        `'${config.purityTests}' must return a function, or an array of functions. See docs.`
-      );
-
-    const pureFunctions = []; // names of pure functions
-    const errors = [];
-
-    // run each test
-    purityTests.forEach((runTest) => {
-      let testedFunc;
-      try {
-        testedFunc = runTest();
-        if (testedFunc.constructor !== Function)
-          throw new TypeError(
-            `all 'tests' (functions) returned by '${config.purityTests}' must return the tested function`
-          );
-        // passes test for purity
-        if (pureFunctions.indexOf(testedFunc.name) === -1) {
-          pureFunctions.push(testedFunc.name); // add it if didn't already
-        }
-      } catch (err) {
-        if (err.name === "ReferenceError") {
-          errors.push(err);
-        } else {
-          throw err; // rethrow unexpected error
-        }
-      }
-    });
-
-    return { pureFunctions, errors };
-  }
-
-  function discoverPureFunctions(file) {
-    const { pureFunctions } = runPurityTests(file);
-    return pureFunctions;
-  }
-
-  function clearRequireCache() {
-    Object.keys(require.cache).forEach(function (key) {
-      delete require.cache[key];
-    });
-  }
+  after(function() {
+    // helper.removeDir(config.rewriteDir);
+  });
 
   it("are 'pure', i.e. producing NO side-effects, and relying on NO external state", () => {
     helper.removeDir(config.rewriteDir); // nuke rewrites directory
@@ -100,24 +46,30 @@ describe("all function declarations exported from modules in 'fcore/'", () => {
         pureFunctions
       );
 
-      clearRequireCache(); // to reload new files
+      helper.clearRequireCache(); // to reload new files
 
-      rewrittenFiles.forEach((file, idx) => {
+      rewrittenFiles.forEach((file, fileIdx) => {
         let discoveredPureFunctions;
         try {
-          discoveredPureFunctions = discoverPureFunctions(file);
+          discoveredPureFunctions = helper.discoverPureFunctions(file);
         } catch (err) {
-          return fail(`Error in 'fcore/${fcoreFiles[idx]}': ${err}`);
+          return fail(`Error in 'fcore/${fcoreFiles[fileIdx]}': ${err}`);
         }
 
-        pureFunctions.forEach((module, idx) => {
-          // get intersection of new pure functions and the dependencies of each module
-          const pureDependencies = discoveredPureFunctions.filter((pf) =>
-            moduleDependencies[idx].includes(pf)
-          );
-          pureDependencies.forEach((pureDep) => {
-            if (pureFunctions[idx].indexOf(pureDep) === -1) {
-              pureFunctions[idx].push(pureDep); // add it if didn't already
+        discoveredPureFunctions.forEach((newPureFunc) => {
+          // inject pure func back into to same module
+          if (pureFunctions[fileIdx].indexOf(newPureFunc) === -1) {
+            pureFunctions[fileIdx].push(newPureFunc); // add it if didn't already
+            numPureFunctionsDiscovered++;
+          }
+
+          // inject into all other modules too which have it as a dependency
+          pureFunctions.forEach((pureFunctionsInModule, moduleIdx) => {
+            if (
+              moduleDependencies[moduleIdx].includes(newPureFunc) &&
+              pureFunctionsInModule.indexOf(newPureFunc) === -1
+            ) {
+              pureFunctionsInModule.push(newPureFunc);
               numPureFunctionsDiscovered++;
             }
           });
@@ -131,7 +83,7 @@ describe("all function declarations exported from modules in 'fcore/'", () => {
 
     // Fail if there are still impure functions remaining
     rewrittenFiles.forEach((file, idx) => {
-      const { errors } = runPurityTests(file);
+      const { errors } = helper.runPurityTests(file);
       errors.forEach((error) => {
         impureModules.push({ idx, error });
       });

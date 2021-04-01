@@ -43,6 +43,12 @@ function removeDir(dir) {
   }
 }
 
+function clearRequireCache() {
+  Object.keys(require.cache).forEach(function (key) {
+    delete require.cache[key];
+  });
+}
+
 /**
  * Rewrite fcore/ files to .rewrite/
  * @param {Array<String>} files list of relative file paths contained in fromDir
@@ -82,9 +88,65 @@ function getDependencies(file) {
   return dependencies;
 }
 
+  /**
+   * Runs the purity tests in a given fcore module
+   * @param {String} file filename containing the fcore module
+   * @returns a an object { pureFunctions, numImpure }, where:
+   * pureFunctions : list of names of pure functions declared in the file
+   * errors : list of errors thrown in tests
+   */
+  function runPurityTests(file) {
+    const fcoreModule = require(file);
+    if (fcoreModule._purityTests.constructor !== Function)
+      throw new Error(`'${config.purityTests}' function missing. See docs.`);
+
+    let purityTests = fcoreModule._purityTests(); // get tests
+    if (purityTests.constructor === Function) purityTests = [purityTests]; // wrap in array
+
+    if (purityTests.constructor !== Array)
+      throw new TypeError(
+        `'${config.purityTests}' must return a function, or an array of functions. See docs.`
+      );
+
+    const pureFunctions = []; // names of pure functions
+    const errors = [];
+
+    // run each test
+    purityTests.forEach((runTest) => {
+      let testedFunc;
+      try {
+        testedFunc = runTest();
+        if (testedFunc.constructor !== Function)
+          throw new TypeError(
+            `all 'tests' (functions) returned by '${config.purityTests}' must return the tested function`
+          );
+        // passes test for purity
+        if (pureFunctions.indexOf(testedFunc.name) === -1) {
+          pureFunctions.push(testedFunc.name); // add it if didn't already
+        }
+      } catch (err) {
+        if (err.name === "ReferenceError") {
+          errors.push(err);
+        } else {
+          throw err; // rethrow unexpected error
+        }
+      }
+    });
+
+    return { pureFunctions, errors };
+  }
+
+  function discoverPureFunctions(file) {
+    const { pureFunctions } = runPurityTests(file);
+    return pureFunctions;
+  }
+
 module.exports = {
   getAllFilenames,
   removeDir,
   rewriteAll,
   getDependencies,
+  clearRequireCache,
+  runPurityTests,
+  discoverPureFunctions,
 };
