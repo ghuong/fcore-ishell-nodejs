@@ -27,7 +27,8 @@ function rewrite(inputFilename, outputFilename, dependenciesToInject = []) {
     ) {
       const vars = node.parent.params
         .map((node) => node.name)
-        .concat(dependenciesToInject);
+        .concat(dependenciesToInject)
+        .concat(node.parent.id.name);
       // wrap function in "use strict" closure
       const pre = '`(function (){\n"use strict"\nreturn (function () ';
       const post = "\n())}())`";
