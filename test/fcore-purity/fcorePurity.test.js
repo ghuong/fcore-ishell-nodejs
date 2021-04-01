@@ -130,7 +130,7 @@ describe("every function in fcore/", () => {
       })
       .join("");
 
-    console.log(`\n${pureMessage}\n`);
+    console.log(`\n${pureMessage}`);
 
     // Fail if there are still impure functions remaining
     if (foundError) {

@@ -1,7 +1,8 @@
-const falafel = require("falafel");
-const rewrite = require("./rewrite");
 const fs = require("fs");
 const path = require("path");
+const falafel = require("falafel");
+const rewrite = require("./rewrite");
+const config = require("./config");
 
 /**
  * Get all relative filepaths in given directory, recursively,
@@ -112,16 +113,24 @@ function findRequiredDependenciesInSourceFile(filepath) {
  */
 function runPurityTests(fcoreModuleName) {
   const fcoreModule = require(fcoreModuleName);
-  if (fcoreModule._purityTests.constructor !== Function)
+  if (
+    !fcoreModule._purityTests ||
+    fcoreModule._purityTests.constructor !== Function
+  )
     throw new Error(`'${config.purityTests}' function missing. See docs.`);
 
   let purityTests = fcoreModule._purityTests(); // retrieve the set of tests
+
+  if (!purityTests) {
+    throw new Error(`${config.purityTests} returns undefined.`);
+  }
+
   if (purityTests.constructor === Function) {
     // if only a single test case (a function) is provided...
     purityTests = [purityTests]; // wrap it in an array
   }
 
-  if (purityTests.constructor !== Array) {
+  if (purityTests.constructor !== Array || purityTests.length === 0) {
     throw new TypeError(
       `'${config.purityTests}' must return a function, or an array of functions. See docs.`
     );
@@ -135,6 +144,13 @@ function runPurityTests(fcoreModuleName) {
     let testedFunction;
     try {
       testedFunction = runTest(); // if test throws an error, it fails, otherwise it passes
+
+      if (!testedFunction) {
+        throw new TypeError(
+          `${config.purityTests} must be a function that returns an array of test cases, or a single test case. Did you accidentally define it as a test case itself? Or did you forget to return the tested function in the TestCase?`
+        );
+      }
+
       if (testedFunction.constructor !== Function) {
         throw new TypeError(
           `all 'test cases' defined in '${config.purityTests}' must return the function being tested. See docs.`
