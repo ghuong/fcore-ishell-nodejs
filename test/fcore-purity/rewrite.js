@@ -17,7 +17,7 @@ const config = require("./config");
  * @param {String} inputFilename path to input file
  * @param {String} outputFilename path to output file
  */
-function rewrite(inputFilename, outputFilename, pureFunctions = []) {
+function rewrite(inputFilename, outputFilename, dependenciesToInject = []) {
   const source = fs.readFileSync(inputFilename, "utf8");
   const output = falafel(source, function (node) {
     if (
@@ -27,7 +27,7 @@ function rewrite(inputFilename, outputFilename, pureFunctions = []) {
     ) {
       const vars = node.parent.params
         .map((node) => node.name)
-        .concat(pureFunctions);
+        .concat(dependenciesToInject);
       // wrap function in "use strict" closure
       const pre = '`(function (){\n"use strict"\nreturn (function () ';
       const post = "\n())}())`";

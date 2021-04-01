@@ -48,3 +48,13 @@ The directory structure is as follows:
     └───fcore-purity/   # Tests whether all fcore modules are "pure"
     └───ishell/         # Integrated tests for ishell functions
 ```
+
+### Pure Functions
+
+A function is pure if:
+
+1. When called with the same arguments, it returns the same result.
+
+2. Produces no side-effects outside of itself.
+
+3. Relies on no external state.

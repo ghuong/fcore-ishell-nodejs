@@ -1,8 +1,10 @@
-function launchNukes() {}
-
 function add(a, b) {
   launchNukes();
   return a + b;
+}
+
+function launchNukes() {
+  console.log("Launching nukes! Impure side-effect!");
 }
 
 module.exports = {
