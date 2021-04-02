@@ -50,10 +50,9 @@ describe("every function in fcore/", () => {
 
       // test each rewritten module
       sandboxedModules.forEach((file, iFile) => {
-        const { pure, impure, errors } = helper.runPuretests(file);
+        const { pure, errors } = helper.runPuretests(file);
 
-        impure.forEach((impureFunc, idx) => {
-          const error = errors[idx];
+        errors.forEach((error) => {
           if (error.name === "ReferenceError") {
             const dependency = helper.getReferenceFromError(error);
             depsPerFile[iFile].push(dependency);
@@ -66,7 +65,7 @@ describe("every function in fcore/", () => {
             numPureFuncsFoundThisIteration++;
           }
 
-          // inject into all other modules too which have it as a dependency
+          // inject pure function into each file's sandbox that depends on it
           pureDepsPerFile.forEach((pureDepsInFile, iDependentFile) => {
             if (
               depsPerFile[iDependentFile].includes(pureFunc) &&
