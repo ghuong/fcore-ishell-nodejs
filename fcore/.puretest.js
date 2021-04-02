@@ -29,7 +29,6 @@ function puretest(_functionToTest, ..._args) {
         (testcase) => testcase.name === functionToTest.name
       );
       if (existingTestCase) {
-        console.log("existingTestCase:", existingTestCase);
         existingTestCase.argsLists.push(args);
       } else {
         const newTestcase = {
@@ -73,41 +72,5 @@ function puretest(_functionToTest, ..._args) {
     },
   }._init(_functionToTest, ..._args);
 }
-
-// function arr(itemX) {
-//   const toReturn = {
-//     init: function (item) {
-//       this._items = [item];
-//       return this;
-//     },
-//     push: function (item) {
-//       this._items.push(item);
-//       return this;
-//     },
-//     pop: function (item) {
-//       this._items.pop();
-//       return this;
-//     },
-//     shift: function () {
-//       this._items.shift();
-//       return this;
-//     },
-//     unshift: function (item) {
-//       this._items.unshift(item);
-//       return this;
-//     },
-//     pushX: function () {
-//       this._items.push(itemX);
-//       return this;
-//     },
-//     print: function () {
-//       console.log(this._items);
-//       return this;
-//     },
-//   }.init(itemX);
-
-//   itemX = null;
-//   return toReturn;
-// }
 
 module.exports = puretest;

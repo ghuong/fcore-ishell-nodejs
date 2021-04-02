@@ -127,6 +127,21 @@ function runPuretests(fcoreModuleName) {
   return fcoreModule._puretests._run();
 }
 
+/**
+ * reference error
+ * @param {ReferenceError} referenceError 
+ * @returns name of the reference which is not defined
+ */
+function getReferenceFromError(referenceError) {
+  if (referenceError.name !== "ReferenceError")
+    throw new TypeError("argument must be a ReferenceError");
+
+  const errMsg = referenceError.message;
+  if (errMsg.includes("is not defined")) {
+    return errMsg.split(" ")[0];
+  }
+}
+
 module.exports = {
   getRelativeFilepathsInDir,
   removeDir,
@@ -135,4 +150,5 @@ module.exports = {
   findRequiredDependenciesInSourceFile,
   clearRequireCache,
   runPuretests,
+  getReferenceFromError,
 };
