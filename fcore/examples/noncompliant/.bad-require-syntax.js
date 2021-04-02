@@ -7,20 +7,12 @@
 const puretest = require("../../.puretest");
 
 //! Renaming the exported function is NOT supported:
-const myAdd = require("../pure_functions/add/pure-add").add;
+const myRenamedAdd = require("../pure_functions/add/pure-add").add;
 
-//! Requiring whole module is NOT supported:
-// const adderModule = require("../add/pure-add");
-// const add = adderModule.add;
-
-// TODO: Destructuring syntax is currently NOT supported:
-// const { add } = require("../add/pure-add");
-
-//? See 'pure_functions/pure-sub.js' for a proper example
+//? See 'pure_functions/sub/pure-sub.js' for a proper example
 
 function sub(a, b) {
-  return myAdd(a, -b); //! will FAIL
-  // return add(a, -b);
+  return myRenamedAdd(a, -b); //! will FAIL
 }
 
 module.exports = {

@@ -83,35 +83,6 @@ function copyFile(file, fromDir, toDir) {
 }
 
 /**
- * Given a filepath to a source file, find all statements of the form:
- * `X = require(Y)`, and return a list of all the X's by their name.
- * TODO: currently does not support destructuring syntax, i.e. `{ X } = require(Y)`
- * @param {Array<String>} filepath source file to read
- */
-function findRequiredDependenciesInSourceFile(filepath) {
-  const dependencies = [];
-
-  const source = fs.readFileSync(filepath, "utf8");
-  falafel(source, function (node) {
-    if (node.type === "VariableDeclaration") {
-      node.declarations.forEach((declaration) => {
-        if (
-          declaration.init?.object?.type === "CallExpression" &&
-          declaration.init?.object?.callee?.name === "require" &&
-          declaration.id.name !== config.puretestsHelper
-        ) {
-          dependencies.push(declaration.id.name);
-        }
-      });
-      // console.log("id:", node.declarations[0].id.name);
-      // console.log("init:", node.declarations[0].init);
-    }
-  });
-
-  return dependencies;
-}
-
-/**
  * Runs the "purity tests" defined within a given "fcore" module. See docs for explanation.
  * @param {String} fcoreModuleName name of fcore module
  * @returns an object { pureFunctions, errors }, where:
@@ -119,17 +90,28 @@ function findRequiredDependenciesInSourceFile(filepath) {
  *  - impure : list of names of impure functions declared in the module
  *  - errors : list of errors thrown when each impure function was run in isolated VM sandbox
  */
-function runPuretests(fcoreModuleName) {
+function runPuretests(fcoreModuleName, _alt = false) {
   const fcoreModule = require(fcoreModuleName);
-  if (!fcoreModule._puretests || fcoreModule._puretests.constructor !== Object)
-    throw new Error(`Missing \`${config.puretests}\` in \`${fcoreModuleName}\`.\nSee docs.`);
+  if (
+    !fcoreModule._puretests ||
+    fcoreModule._puretests.constructor !== Object
+  ) {
+    throw new Error(
+      `Missing \`${config.puretests}\` in \`${fcoreModuleName}\`.\nSee docs.`
+    );
+  }
 
-  return fcoreModule._puretests._run();
+  return _alt ? fcoreModule._puretests._run2() : fcoreModule._puretests._run();
+}
+
+// Alternate version of puretest
+function runPuretests2(fcoreModuleName) {
+  return runPuretests(fcoreModuleName, true);
 }
 
 /**
  * reference error
- * @param {ReferenceError} referenceError 
+ * @param {ReferenceError} referenceError
  * @returns name of the reference which is not defined
  */
 function getReferenceFromError(referenceError) {
@@ -147,8 +129,36 @@ module.exports = {
   removeDir,
   copyFile,
   rewriteAll,
-  findRequiredDependenciesInSourceFile,
   clearRequireCache,
   runPuretests,
+  runPuretests2,
   getReferenceFromError,
 };
+
+/**
+ * //// DEPRECATED: Given a filepath to a source file, find all statements of the form:
+ * `X = require(Y)`, and return a list of all the X's by their name.
+ * @param {Array<String>} filepath source file to read
+ */
+/*
+function findRequiredDependenciesInSourceFile(filepath) {
+  const dependencies = [];
+
+  const source = fs.readFileSync(filepath, "utf8");
+  falafel(source, function (node) {
+    if (node.type === "VariableDeclaration") {
+      node.declarations.forEach((declaration) => {
+        if (
+          declaration.init?.object?.type === "CallExpression" &&
+          declaration.init?.object?.callee?.name === "require" &&
+          declaration.id.name !== config.puretestsHelper
+        ) {
+          dependencies.push(declaration.id.name);
+        }
+      });
+    }
+  });
+
+  return dependencies;
+}
+*/

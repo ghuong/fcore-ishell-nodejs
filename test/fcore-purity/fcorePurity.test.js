@@ -12,6 +12,74 @@ describe("every function in fcore/", () => {
     fcoreFiles = helper.getRelativeFilepathsInDir(config.fcoreDir);
   });
 
+  function assertAllPure(files, tester, failPreludeMsg) {
+    const pureFuncsPerFile = files.map((x) => []);
+    const impureFuncsPerFile = files.map((x) => []);
+    const errorsPerFile = files.map((x) => []);
+
+    let allPure = true;
+
+    // Test all the modules one last time
+    files.forEach((file, iFile) => {
+      const { pure, impure, errors } = tester(file);
+
+      if (impure.length > 0) {
+        allPure = false;
+      }
+
+      pure.forEach((pureFunc) => {
+        pureFuncsPerFile[iFile].push(pureFunc);
+      });
+
+      impure.forEach((impureFunc) => {
+        impureFuncsPerFile[iFile].push(impureFunc);
+      });
+
+      errors.forEach((error) => {
+        errorsPerFile[iFile].push(error);
+      });
+    });
+
+    // display information about pure functions for each module
+    const pureMessage = pureFuncsPerFile
+      .map((pureInFile, iFile) => {
+        if (pureInFile.length === 0) return "";
+
+        const delim = "\n ✅ ";
+        const displayPure = delim + pureInFile.join(delim);
+        return `${fcoreFiles[iFile]}:${displayPure}\n\n`;
+      })
+      .join("");
+
+    console.log(`\nPure functions in fcore/:\n\n${pureMessage}`);
+
+    // Fail if there are still impure functions remaining
+    if (!allPure) {
+      const impureMessage = impureFuncsPerFile
+        .map((impureInFile, iFile) => {
+          if (impureInFile.length === 0) return "";
+
+          const delim = "\n ❌ ";
+          const displayImpure =
+            delim +
+            impureInFile
+              .map((impureFunc, iImp) => {
+                const error = errorsPerFile[iFile][iImp];
+                return `\`${impureFunc}\` threw: ${error}`;
+              })
+              .join(delim);
+          return `${fcoreFiles[iFile]}:${displayImpure}\n\n`;
+        })
+        .join("");
+
+      fail(
+        `\n\n${failPreludeMsg}:\n\n${impureMessage}`
+      );
+    }
+
+    return allPure;
+  }
+
   it("can run in an isolated sandbox", () => {
     /**
      * The files in fcore/ will be rewritten, wrapping all function declarations to run in isolated VM sandboxes.
@@ -78,71 +146,17 @@ describe("every function in fcore/", () => {
       });
     } while (numPureFuncsFoundThisIteration > 0);
 
-    const impureFuncsPerFile = fcoreFiles.map((x) => []);
-    const errorsPerFile = fcoreFiles.map((x) => []);
-    pureFuncsPerFile = fcoreFiles.map((x) => []);
-    let impureFound = false;
-
-    // Test all the modules one last time
-    sandboxedModules.forEach((file, iFile) => {
-      const { pure, impure, errors } = helper.runPuretests(file);
-
-      if (impure.length > 0) {
-        impureFound = true;
-      }
-
-      pure.forEach((pureFunc) => {
-        pureFuncsPerFile[iFile].push(pureFunc);
-      });
-
-      impure.forEach((impureFunc) => {
-        impureFuncsPerFile[iFile].push(impureFunc);
-      });
-
-      errors.forEach((error) => {
-        errorsPerFile[iFile].push(error);
-      });
-    });
-
-    // display information about pure functions for each module
-    const pureMessage = pureFuncsPerFile
-      .map((pureInFile, iFile) => {
-        if (pureInFile.length === 0) return "";
-
-        const delim = "\n ✅ ";
-        const displayPure = delim + pureInFile.join(delim);
-        return `${fcoreFiles[iFile]}:${displayPure}\n\n`;
-      })
-      .join("");
-
-    console.log(`\nPure functions in fcore/:\n\n${pureMessage}`);
-
-    // Fail if there are still impure functions remaining
-    if (impureFound) {
-      const impureMessage = impureFuncsPerFile
-        .map((impureInFile, iFile) => {
-          if (impureInFile.length === 0) return "";
-
-          const delim = "\n ❌ ";
-          const displayImpure =
-            delim +
-            impureInFile
-              .map((impureFunc, iImp) => {
-                const error = errorsPerFile[iFile][iImp];
-                return `\`${impureFunc}\` threw: ${error}`;
-              })
-              .join(delim);
-          return `${fcoreFiles[iFile]}:${displayImpure}\n\n`;
-        })
-        .join("");
-
-      return fail(
-        `\n\nThese functions failed to run in isolated VM sandboxes:\n\n${impureMessage}The re-written source code can be found in \`fcore/.rewrite/\`\n`
-      );
+    const failPreludeMsg = "These functions failed to run in isolated VM sandboxes";
+    if(assertAllPure(sandboxedModules, helper.runPuretests, failPreludeMsg)) {
+      helper.removeDir(config.rewriteDir);
+    } else {
+      console.error("The re-written source code can be found in fcore/.rewrite/\n");
     }
-
-    helper.removeDir(config.rewriteDir);
   });
 
-  // it("has ")
+  it("passes `is-pure-function` test", () => {
+    const files = fcoreFiles.map((f) => path.join(config.fcoreDir, f));
+    const failPreludeMsg = "The npm module `is-pure-function` determined these functions to be impure";
+    assertAllPure(files, helper.runPuretests2, failPreludeMsg);
+  });
 });
