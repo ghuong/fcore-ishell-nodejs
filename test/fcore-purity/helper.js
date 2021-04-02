@@ -122,7 +122,7 @@ function findRequiredDependenciesInSourceFile(filepath) {
 function runPuretests(fcoreModuleName) {
   const fcoreModule = require(fcoreModuleName);
   if (!fcoreModule._puretests || fcoreModule._puretests.constructor !== Object)
-    throw new Error(`'${config.puretests}' function missing. See docs.`);
+    throw new Error(`Missing \`${config.puretests}\` in \`${fcoreModuleName}\`.\nSee docs.`);
 
   return fcoreModule._puretests._run();
 }

@@ -1,8 +1,10 @@
 /**
- * This file starts with a dot . so it will be ignored by the purity tester.
+ * This file/dir starts with a dot . so it will be ignored by the purity tester.
  * To test this file, rename it without the dot .
  * then run `npm test` to see how the tests fail
  */
+
+const puretest = require("../../.puretest");
 
 //! IMPURE: produces side-effect
 function add(a, b) {
@@ -27,14 +29,7 @@ function declareWar() {
 module.exports = {
   add,
   add5,
-  _puretests: () => [
-    () => {
-      add(2, 3);
-      return add;
-    },
-    () => {
-      add5(4);
-      return add5;
-    },
-  ],
+  _puretests: 
+    puretest(add, 2, 3)
+    .puretest(add5, 4)
 };

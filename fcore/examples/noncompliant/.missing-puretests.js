@@ -4,6 +4,8 @@
  * then run `npm test` to see how the tests fail
  */
 
+const puretest = require("../../.puretest");
+
 function foo(a) {
   return a;
 }
@@ -11,5 +13,5 @@ function foo(a) {
 //! missing _puretest function. Will throw an error in purity test
 module.exports = {
   foo,
-  // _puretest: () => () => { foo(5); return foo; } //! <-- missing!
+  // _puretest: puretest(foo, 5) //! <-- missing!
 };

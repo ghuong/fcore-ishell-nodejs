@@ -12,11 +12,7 @@ describe("every function in fcore/", () => {
     fcoreFiles = helper.getRelativeFilepathsInDir(config.fcoreDir);
   });
 
-  after(() => {
-    // fsHelper.removeDir(config.rewriteDir); // TODO: uncomment
-  });
-
-  it("can run in an isolated sandbox without throwing a ReferenceError", () => {
+  it("can run in an isolated sandbox", () => {
     /**
      * The files in fcore/ will be rewritten, wrapping all function declarations to run in isolated VM sandboxes.
      * This way, any impure function that either:
@@ -116,11 +112,11 @@ describe("every function in fcore/", () => {
 
         const indent = "\n ✅ ";
         const displayPure = indent + pureInModule.join(indent);
-        return `'${fcoreFiles[iMod]}' has pure functions:${displayPure}\n\n`;
+        return `${fcoreFiles[iMod]}:${displayPure}\n\n`;
       })
       .join("");
 
-    console.log(`\n${pureMessage}`);
+    console.log(`\nPure functions in fcore/:\n\n${pureMessage}`);
 
     // Fail if there are still impure functions remaining
     if (impureFound) {
@@ -131,13 +127,15 @@ describe("every function in fcore/", () => {
           const indent = "\n ❌ ";
           const displayImpure = indent + impureInModule.map((impureFunc, iImp) => {
             const error = errorsPerModule[iMod][iImp];
-            return `${impureFunc} : ${error}`;
+            return `\`${impureFunc}\` threw: ${error}`;
           }).join(indent);
-          return `'${fcoreFiles[iMod]}' has impure functions:${displayImpure}\n\n`;
+          return `${fcoreFiles[iMod]}:${displayImpure}\n\n`;
         })
         .join("");
 
-      return fail(`\n\n${impureMessage}`);
+      return fail(`\n\nThese functions failed to run in isolated VM sandboxes:\n\n${impureMessage}The re-written source code can be found in \`fcore/.rewrite/\`\n`);
+    } else {
+      helper.removeDir(config.rewriteDir);
     }
   });
 

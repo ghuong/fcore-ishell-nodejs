@@ -4,6 +4,8 @@
  * then run `npm test` to see how the tests fail
  */
 
+const puretest = require("../../.puretest");
+
 //! Renaming the exported function is NOT supported:
 const myAdd = require("../pure_functions/add/pure-add").add;
 
@@ -18,13 +20,11 @@ const myAdd = require("../pure_functions/add/pure-add").add;
 
 function sub(a, b) {
   return myAdd(a, -b); //! will FAIL
-  // return add(a, -b); //! will also FAIL
+  // return add(a, -b);
 }
 
 module.exports = {
   sub,
-  _puretests: () => () => {
-    sub(6, 3);
-    return sub;
-  },
+  _puretests: 
+    puretest(sub, 6, 3)
 };

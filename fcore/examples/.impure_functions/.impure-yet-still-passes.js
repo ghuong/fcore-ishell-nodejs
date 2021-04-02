@@ -5,6 +5,7 @@
  */
 
 const path = require("path"); // external dependency
+const puretest = require("../../.puretest");
 
 let externalState = "before";
 
@@ -17,10 +18,6 @@ const getFilenameIMPURE = (filepath) => {
 
 module.exports = {
   getFilenameIMPURE,
-  _puretests: () => [
-    () => {
-      getFilenameIMPURE("/foo/bar.txt");
-      return getFilenameIMPURE;
-    },
-  ],
+  _puretests: 
+    puretest(getFilenameIMPURE, "/foo/bar.txt")
 };

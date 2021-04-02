@@ -1,6 +1,9 @@
+
 /**
  * Example using Dependency Injection. Contrast this with 'impure-filename.js' in .impure/
  */
+
+const puretest = require("../../../.puretest");
 
 const path = require("path"); // external dependency
 
@@ -12,10 +15,6 @@ function getFilenameWithDI(filepath, pathDep) {
 module.exports = {
   // getFilename,
   getFilenameWithDI,
-  _puretests: () => [
-    () => {
-      getFilenameWithDI("/foo/bar/hello.txt", path);
-      return getFilenameWithDI;
-    },
-  ],
+  _puretests: 
+    puretest(getFilenameWithDI, "/foo/bar/hello.txt", path)
 };
