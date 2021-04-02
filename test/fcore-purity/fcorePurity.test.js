@@ -2,23 +2,21 @@ const { fail, ok } = require("assert");
 const path = require("path");
 
 const config = require("./config");
-const fsHelper = require("./fsHelper");
+const helper = require("./helper");
 
 describe("every function in fcore/", () => {
-  let fcoreRelativeFilepaths; // filepaths relative to fcore/
+  let fcoreFiles; // filepaths relative to fcore/
 
   before(() => {
-    fsHelper.removeDir(config.rewriteDir); // nuke rewrites directory
-    fcoreRelativeFilepaths = fsHelper.getRelativeFilepathsInDir(
-      config.fcoreDir
-    );
+    helper.removeDir(config.rewriteDir); // nuke rewrites directory
+    fcoreFiles = helper.getRelativeFilepathsInDir(config.fcoreDir);
   });
 
   after(() => {
-    // helper.removeDir(config.rewriteDir);
+    // fsHelper.removeDir(config.rewriteDir); // TODO: uncomment
   });
 
-  it("is pure", () => {
+  it("can run in an isolated sandbox without throwing a ReferenceError", () => {
     /**
      * The files in fcore/ will be rewritten, wrapping all function declarations to run in isolated VM sandboxes.
      * This way, any impure function that either:
@@ -27,123 +25,121 @@ describe("every function in fcore/", () => {
      * will throw a ReferenceError when it runs, denoting it as impure.
      * Then, this test will fail if ANY such function is found to be impure, and pass otherwise.
      */
-    let rewrittenFilesAbsolutePaths = [];
+    let sandboxedModules = [];
+    helper.copyFile(config.puretestFilename, config.fcoreDir, config.rewriteDir);
 
     // Keep track of the names of pure functions found in each file
-    let pureFunctionsPerFile = fcoreRelativeFilepaths.map((x) => []);
-    const dependenciesPerModule = fcoreRelativeFilepaths.map((file) => {
-      return fsHelper.findRequiredDependenciesInSourceFile(
+    let pureFuncsPerModule = fcoreFiles.map((x) => []);
+    // TODO: replace this with ReferenceError's reference name
+    const depsPerModule = fcoreFiles.map((file) => {
+      return helper.findRequiredDependenciesInSourceFile(
         path.join(config.fcoreDir, file)
       );
     });
+
+    const pureDepsPerModule = fcoreFiles.map((x) => []);
+
     // console.log("moduleDependencies:", moduleDependencies);
     // console.log(pureFunctions);
     let numPureFunctionsFoundThisIteration;
     // This do..while will keep looping until no new pure functions are found
     do {
       numPureFunctionsFoundThisIteration = 0;
-      // rewrite fcore modules, and inject all pure functions discovered so far into the sandboxes, so they can be called
-      // this way, a function that only calls pure functions can be recognized as pure
-      rewrittenFilesAbsolutePaths = fsHelper.rewriteAll(
-        fcoreRelativeFilepaths,
+      // Rewrite fcore modules to run in sandboxes with pure dependencies injected
+      // This way, functions which call other pure functions can be recognized as pure
+      sandboxedModules = helper.rewriteAll(
+        fcoreFiles,
         config.fcoreDir, // from fcore/
         config.rewriteDir, // to fcore/.rewrite
-        pureFunctionsPerFile
+        pureDepsPerModule
       );
 
-      fsHelper.clearRequireCache(); // to reload new files
+      helper.clearRequireCache(); // to force reload of the newly rewritten files
 
-      rewrittenFilesAbsolutePaths.forEach(
-        (moduleFilepath, idxFileBeingSearched) => {
-          let pureFunctionsFoundInModule;
-          try {
-            pureFunctionsFoundInModule = fsHelper.findPureFunctions(
-              moduleFilepath
-            );
-          } catch (err) {
-            return fail(
-              `Error in 'fcore/${fcoreRelativeFilepaths[idxFileBeingSearched]}': ${err}`
-            );
+      // test each rewritten module
+      sandboxedModules.forEach((moduleToTest, iMod) => {
+        const { pure } = helper.runPuretests(moduleToTest); // test and get a list of pure functions
+
+        pure.forEach((pureFunc) => {
+          // inject pure func back into to same module
+          if (!pureFuncsPerModule[iMod].includes(pureFunc)) {
+            pureFuncsPerModule[iMod].push(pureFunc); // add it if didn't already
+            pureDepsPerModule[iMod].push(pureFunc); // now functions in this module can call it too // TODO replace
+            numPureFunctionsFoundThisIteration++;
           }
 
-          pureFunctionsFoundInModule.forEach((pureFunctionFound) => {
-            // inject pure func back into to same module
+          // inject into all other modules too which have it as a dependency
+          pureDepsPerModule.forEach((pureDepsInMod, iMod) => {
             if (
-              !pureFunctionsPerFile[idxFileBeingSearched].includes(
-                pureFunctionFound
-              )
+              depsPerModule[iMod].includes(pureFunc) &&
+              !pureDepsInMod.includes(pureFunc)
             ) {
-              pureFunctionsPerFile[idxFileBeingSearched].push(
-                pureFunctionFound
-              ); // add it if didn't already
-              numPureFunctionsFoundThisIteration++;
+              pureDepsInMod.push(pureFunc);
             }
-
-            // inject into all other modules too which have it as a dependency
-            pureFunctionsPerFile.forEach(
-              (pureFunctionsInModule, idxModuleWithDependencies) => {
-                if (
-                  dependenciesPerModule[idxModuleWithDependencies].includes(
-                    pureFunctionFound
-                  ) &&
-                  !pureFunctionsInModule.includes(pureFunctionFound)
-                ) {
-                  pureFunctionsInModule.push(pureFunctionFound);
-                  numPureFunctionsFoundThisIteration++;
-                }
-              }
-            );
           });
-        }
-      );
+        });
+      });
       // console.log("numPureFunctionsDiscovered:", numPureFunctionsDiscovered);
       // console.log("pureFunctions:", pureFunctions);
     } while (numPureFunctionsFoundThisIteration > 0);
 
-    const errorsPerModule = fcoreRelativeFilepaths.map((x) => []);
-    const pureFunctionsPerModule = fcoreRelativeFilepaths.map((x) => []);
-    let foundError = false;
+    const impureFuncsPerModule = fcoreFiles.map((x) => []);
+    const errorsPerModule = fcoreFiles.map((x) => []);
+    pureFuncsPerModule = fcoreFiles.map((x) => []);
+    let impureFound = false;
 
     // Test all the modules one last time
-    rewrittenFilesAbsolutePaths.forEach((fcoreModuleName, moduleIdx) => {
-      const { pureFunctions, errors } = fsHelper.runPurityTests(
-        fcoreModuleName
-      );
+    sandboxedModules.forEach((moduleToTest, iMod) => {
+      const { pure, impure, errors } = helper.runPuretests(moduleToTest);
 
-      pureFunctions.forEach((pureFunction) => {
-        pureFunctionsPerModule[moduleIdx].push(pureFunction);
+      if (impure.length > 0) {
+        impureFound = true;
+      }
+
+      pure.forEach((pureFunc) => {
+        pureFuncsPerModule[iMod].push(pureFunc);
+      });
+
+      impure.forEach((impureFunc) => {
+        impureFuncsPerModule[iMod].push(impureFunc);
       });
 
       errors.forEach((error) => {
-        errorsPerModule[moduleIdx].push(error);
-        foundError = true;
+        errorsPerModule[iMod].push(error);
       });
     });
 
     // display information about pure functions for each module
-    const pureMessage = pureFunctionsPerModule
-      .map((pureFunctionsInModule, moduleIdx) => {
-        if (pureFunctionsInModule.length === 0) return "";
+    const pureMessage = pureFuncsPerModule
+      .map((pureInModule, iMod) => {
+        if (pureInModule.length === 0) return "";
 
-        const listOfPureFunctionsMessage = pureFunctionsInModule.join("\n ✅ ");
-        return `'${fcoreRelativeFilepaths[moduleIdx]}' has pure functions:\n ✅ ${listOfPureFunctionsMessage}\n\n`;
+        const indent = "\n ✅ ";
+        const displayPure = indent + pureInModule.join(indent);
+        return `'${fcoreFiles[iMod]}' has pure functions:${displayPure}\n\n`;
       })
       .join("");
 
     console.log(`\n${pureMessage}`);
 
     // Fail if there are still impure functions remaining
-    if (foundError) {
-      const impureMessage = errorsPerModule
-        .map((errorsInModule, moduleIdx) => {
-          if (errorsInModule.length === 0) return "";
+    if (impureFound) {
+      const impureMessage = impureFuncsPerModule
+        .map((impureInModule, iMod) => {
+          if (impureInModule.length === 0) return "";
 
-          const listOfErrorsMessage = errorsInModule.join("\n ❌ ");
-          return `'${fcoreRelativeFilepaths[moduleIdx]}' has errors:\n ❌ ${listOfErrorsMessage}\n\n`;
+          const indent = "\n ❌ ";
+          const displayImpure = indent + impureInModule.map((impureFunc, iImp) => {
+            const error = errorsPerModule[iMod][iImp];
+            return `${impureFunc} : ${error}`;
+          }).join(indent);
+          return `'${fcoreFiles[iMod]}' has impure functions:${displayImpure}\n\n`;
         })
         .join("");
 
       return fail(`\n\n${impureMessage}`);
     }
   });
+
+  // it("has ")
 });

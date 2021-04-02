@@ -12,7 +12,7 @@ function getFilenameWithDI(filepath, pathDep) {
 module.exports = {
   // getFilename,
   getFilenameWithDI,
-  _purityTests: () => [
+  _puretests: () => [
     () => {
       getFilenameWithDI("/foo/bar/hello.txt", path);
       return getFilenameWithDI;

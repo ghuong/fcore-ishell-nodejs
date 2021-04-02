@@ -1,6 +1,6 @@
 /**
  * This file starts with a dot . so it will be ignored by the purity tester.
- * To test this file, rename it without the dot . 
+ * To test this file, rename it without the dot .
  * then run `npm test` to see how the tests fail
  */
 
@@ -27,7 +27,7 @@ function declareWar() {
 module.exports = {
   add,
   add5,
-  _purityTests: () => [
+  _puretests: () => [
     () => {
       add(2, 3);
       return add;
@@ -35,6 +35,6 @@ module.exports = {
     () => {
       add5(4);
       return add5;
-    }
-  ]
+    },
+  ],
 };

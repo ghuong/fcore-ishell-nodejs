@@ -10,9 +10,10 @@ function foo(a) {
 
 module.exports = {
   foo,
-  //! _purityTests must be a function that returns a TestCase, NOT a TestCase itself!
-  _purityTests: () => {
-    foo(5);
-    return foo;
-  }
+  _puretests: () => [
+    () => {
+      return foo(5); //! Must return the function itself, NOT the result of calling it!
+      // return foo; //* <-- this is correct
+    },
+  ],
 };

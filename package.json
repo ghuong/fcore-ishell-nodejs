@@ -10,6 +10,7 @@
   "license": "ISC",
   "devDependencies": {
     "falafel": "^2.2.4",
+    "is-pure-function": "^1.0.4",
     "mkdirp": "^1.0.4",
     "mocha": "^8.3.2"
   }

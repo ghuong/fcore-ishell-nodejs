@@ -19,7 +19,7 @@ const getFilename = (filepath) => path.basename(filepath);
 
 module.exports = {
   getFilename,
-  _purityTests: () => [
+  _puretests: () => [
     () => {
       getFilename("/foo/bar/hello.txt");
       return getFilename;

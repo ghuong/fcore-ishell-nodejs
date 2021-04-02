@@ -14,7 +14,7 @@ function sub(a, b) {
 
 module.exports = {
   sub,
-  _purityTests: () => () => {
+  _puretests: () => () => {
     sub(2, 3);
     return sub;
   },

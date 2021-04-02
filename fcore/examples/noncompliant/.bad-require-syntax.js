@@ -23,7 +23,7 @@ function sub(a, b) {
 
 module.exports = {
   sub,
-  _purityTests: () => () => {
+  _puretests: () => () => {
     sub(6, 3);
     return sub;
   },

@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const falafel = require("falafel");
+const mkdirp = require("mkdirp");
 const rewrite = require("./rewrite");
 const config = require("./config");
 
@@ -76,6 +77,11 @@ function rewriteAll(files, fromDir, toDir, pureFunctions = []) {
   });
 }
 
+function copyFile(file, fromDir, toDir) {
+  mkdirp.sync(toDir);
+  fs.copyFileSync(path.join(fromDir, file), path.join(toDir, file));
+}
+
 /**
  * Given a filepath to a source file, find all statements of the form:
  * `X = require(Y)`, and return a list of all the X's by their name.
@@ -91,7 +97,8 @@ function findRequiredDependenciesInSourceFile(filepath) {
       node.declarations.forEach((declaration) => {
         if (
           declaration.init?.object?.type === "CallExpression" &&
-          declaration.init?.object?.callee?.name === "require"
+          declaration.init?.object?.callee?.name === "require" &&
+          declaration.id.name !== config.puretestsHelper
         ) {
           dependencies.push(declaration.id.name);
         }
@@ -108,86 +115,24 @@ function findRequiredDependenciesInSourceFile(filepath) {
  * Runs the "purity tests" defined within a given "fcore" module. See docs for explanation.
  * @param {String} fcoreModuleName name of fcore module
  * @returns an object { pureFunctions, errors }, where:
- *  - pureFunctions : list of names of pure functions declared in the module
- *  - errors : list of errors thrown in tests
+ *  - pure : list of names of pure functions declared in the module
+ *  - impure : list of names of impure functions declared in the module
+ *  - errors : list of errors thrown when each impure function was run in isolated VM sandbox
  */
-function runPurityTests(fcoreModuleName) {
+function runPuretests(fcoreModuleName) {
   const fcoreModule = require(fcoreModuleName);
-  if (
-    !fcoreModule._purityTests ||
-    fcoreModule._purityTests.constructor !== Function
-  )
-    throw new Error(`'${config.purityTests}' function missing. See docs.`);
+  if (!fcoreModule._puretests || fcoreModule._puretests.constructor !== Object)
+    throw new Error(`'${config.puretests}' function missing. See docs.`);
 
-  let purityTests = fcoreModule._purityTests(); // retrieve the set of tests
-
-  if (!purityTests) {
-    throw new Error(`${config.purityTests} returns undefined.`);
-  }
-
-  if (purityTests.constructor === Function) {
-    // if only a single test case (a function) is provided...
-    purityTests = [purityTests]; // wrap it in an array
-  }
-
-  if (purityTests.constructor !== Array || purityTests.length === 0) {
-    throw new TypeError(
-      `'${config.purityTests}' must return a function, or an array of functions. See docs.`
-    );
-  }
-
-  const pureFunctions = []; // names of the functions that pass their test
-  const errors = []; // errors thrown by the functions that fail their test
-
-  // run each test case
-  purityTests.forEach((runTest) => {
-    let testedFunction;
-    try {
-      testedFunction = runTest(); // if test throws an error, it fails, otherwise it passes
-
-      if (!testedFunction) {
-        throw new TypeError(
-          `${config.purityTests} must be a function that returns an array of test cases, or a single test case. Did you accidentally define it as a test case itself? Or did you forget to return the tested function in the TestCase?`
-        );
-      }
-
-      if (testedFunction.constructor !== Function) {
-        throw new TypeError(
-          `all 'test cases' defined in '${config.purityTests}' must return the function being tested. See docs.`
-        );
-      }
-
-      if (!pureFunctions.includes(testedFunction.name)) {
-        pureFunctions.push(testedFunction.name); // add it if didn't already
-      }
-    } catch (err) {
-      if (err.name === "ReferenceError") {
-        errors.push(err);
-      } else {
-        throw err; // rethrow unexpected error
-      }
-    }
-  });
-
-  return { pureFunctions, errors };
-}
-
-/**
- * Finds the names of pure functions in given fcore module
- * @param {String} fcoreModuleName name of the fcore module
- * @returns list of names of pure functions declared in the module
- */
-function findPureFunctions(fcoreModuleName) {
-  const { pureFunctions } = runPurityTests(fcoreModuleName);
-  return pureFunctions;
+  return fcoreModule._puretests._run();
 }
 
 module.exports = {
   getRelativeFilepathsInDir,
   removeDir,
+  copyFile,
   rewriteAll,
   findRequiredDependenciesInSourceFile,
   clearRequireCache,
-  runPurityTests,
-  findPureFunctions,
+  runPuretests,
 };

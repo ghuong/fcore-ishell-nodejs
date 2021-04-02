@@ -10,10 +10,9 @@ function foo(a) {
 
 module.exports = {
   foo,
-  _purityTests: () => [
-    () => {
-      foo(5);
-      // return foo; //! Oops! Forgot to return the tested function!
-    },
-  ]
+  //! _puretests must be a function that returns a TestCase, NOT a TestCase itself!
+  _puretests: () => {
+    foo(5);
+    return foo;
+  },
 };

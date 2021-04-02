@@ -1,3 +1,5 @@
+const puretest = require("../../../.puretest");
+
 function add(a, b) {
   return a + b;
 }
@@ -10,25 +12,28 @@ module.exports = {
   add,
   add10,
   /**
-   * Every fcore/ module MUST export a function _purityTests, which:
+   * Every fcore/ module MUST export a function _puretests, which:
    * @returns {Array<TestCase>} a list containing one TestCase (which is a function)
    * for EACH function declared in the module file.
    * Each TestCase for a function must:
    *  1. call its respective function, at least once
    *  2. return said function at the end
    */
-  _purityTests: () => [
-    // TestCase for 'add'
-    () => {
-      add(2, 3); // call 'add' function
-      return add; // return it at the end
-    },
-    // TestCase for 'add10'
-    () => {
-      add10(4);
-      add10(6);
-      add10(9); // can call multiple times
-      return add10;
-    }
-  ]
+  _puretests:
+    puretest(add, 3, 4)
+    .puretest(add10, 5)
+  // _puretests: () => [
+  //   // TestCase for 'add'
+  //   () => {
+  //     add(2, 3); // call 'add' function
+  //     return add; // return it at the end
+  //   },
+  //   // TestCase for 'add10'
+  //   () => {
+  //     add10(4);
+  //     add10(6);
+  //     add10(9); // can call multiple times
+  //     return add10;
+  //   },
+  // ],
 };

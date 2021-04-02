@@ -23,7 +23,7 @@ function rewrite(inputFilename, outputFilename, dependenciesToInject = []) {
     if (
       node.type === "BlockStatement" &&
       node.parent.type === "FunctionDeclaration" &&
-      node.parent.id.name !== config.purityTests
+      node.parent.id.name !== config.puretests
     ) {
       const vars = node.parent.params
         .map((node) => node.name)

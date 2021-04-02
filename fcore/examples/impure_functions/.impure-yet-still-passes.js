@@ -17,7 +17,7 @@ const getFilenameIMPURE = (filepath) => {
 
 module.exports = {
   getFilenameIMPURE,
-  _purityTests: () => [
+  _puretests: () => [
     () => {
       getFilenameIMPURE("/foo/bar.txt");
       return getFilenameIMPURE;

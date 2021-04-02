@@ -8,12 +8,8 @@ function foo(a) {
   return a;
 }
 
+//! missing _puretest function. Will throw an error in purity test
 module.exports = {
   foo,
-  _purityTests: () => [
-    () => {
-      return foo(5); //! Must return the function itself, NOT the result of calling it!
-      // return foo; //* <-- this is correct
-    }
-  ],
+  // _puretest: () => () => { foo(5); return foo; } //! <-- missing!
 };

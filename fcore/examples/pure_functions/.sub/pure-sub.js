@@ -8,8 +8,8 @@ function sub(a, b) {
 module.exports = {
   sub,
   // Unlike in add/pure-add.js, instead of returning an {Array<TestCase>},
-  // only a single TestCase is returned by _purityTests here:
-  _purityTests: () =>
+  // only a single TestCase is returned by _puretests here:
+  _puretests: () =>
     // TestCase for 'sub'
     () => {
       sub(2, 3);

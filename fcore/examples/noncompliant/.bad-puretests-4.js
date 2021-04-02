@@ -11,7 +11,7 @@ function foo(a) {
 module.exports = {
   foo,
   // All of the following will FAIL!
-  // _purityTests: () => "hello" //! returning an arbitrary value
-  // _purityTests: "hello" //! is an arbitrary value
-  _purityTests: () => [] //! returning an empty array
+  // _puretests: () => "hello" //! returning an arbitrary value
+  // _puretests: "hello" //! is an arbitrary value
+  _puretests: () => [], //! returning an empty array
 };
