@@ -22,18 +22,4 @@ module.exports = {
   _puretests:
     puretest(add, 3, 4)
     .puretest(add10, 5)
-  // _puretests: () => [
-  //   // TestCase for 'add'
-  //   () => {
-  //     add(2, 3); // call 'add' function
-  //     return add; // return it at the end
-  //   },
-  //   // TestCase for 'add10'
-  //   () => {
-  //     add10(4);
-  //     add10(6);
-  //     add10(9); // can call multiple times
-  //     return add10;
-  //   },
-  // ],
 };

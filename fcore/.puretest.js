@@ -29,7 +29,8 @@ function puretest(_functionToTest, ..._args) {
         (testcase) => testcase.name === functionToTest.name
       );
       if (existingTestCase) {
-        existingTestCase.argsList.push(args);
+        console.log("existingTestCase:", existingTestCase);
+        existingTestCase.argsLists.push(args);
       } else {
         const newTestcase = {
           func: functionToTest,

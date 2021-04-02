@@ -1,15 +1,15 @@
 const puretest = require("../../../.puretest");
 
 // To call an external pure function, require it like so:
-const add = require("../add/pure-add").add; // add is a pure function
+const add = require("../add/pure-add").add; // `add` is pure
 
 function sub(a, b) {
-  return add(a, -b); // call pure function: 'add', this will PASS the test
+  return add(a, -b); // call pure function
 }
 
 module.exports = {
   sub,
-  // Unlike in add/pure-add.js, instead of returning an {Array<TestCase>},
-  // only a single TestCase is returned by _puretests here:
-  _puretests: puretest(sub, 2, 3),
+  _puretests: 
+    puretest(sub, 2, 3)
+    .puretest(sub, 6, 3),
 };
