@@ -91,6 +91,15 @@ function copyFile(file, fromDir, toDir) {
  */
 function runPuretests(fcoreModuleName, _mode) {
   const fcoreModule = require(fcoreModuleName);
+
+  getMethods(fcoreModule).forEach((method) => {
+    if (!fcoreModule._puretests._hasTestFor(method)) {
+      throw new Error(
+        `Missing puretest for method \`${method}\` in \`${fcoreModuleName}\`.\nSee docs.`
+      );
+    }
+  });
+
   if (
     !fcoreModule._puretests ||
     fcoreModule._puretests.constructor !== Object
@@ -125,6 +134,13 @@ function runPuretests3(fcoreModuleName) {
 // Verify that registered module methods take at least one argument
 function runPuretests4(fcoreModuleName) {
   return runPuretests(fcoreModuleName, "hasArgs");
+}
+
+// Get all names of methods of an object
+function getMethods(obj) {
+  return Object.getOwnPropertyNames(obj).filter(
+    (prop) => obj[prop].constructor === Function
+  );
 }
 
 /**

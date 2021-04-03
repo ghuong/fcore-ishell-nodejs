@@ -146,6 +146,9 @@ function puretest(_functionToTest, ..._args) {
     _hasArgs: function() {
       return this._run("hasArgs");
     },
+    _hasTestFor: function(method) {
+      return this._testcases.find((testcase) => testcase.name === method);
+    }
   }._init(_functionToTest, ..._args);
 }
 
