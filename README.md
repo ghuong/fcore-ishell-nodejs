@@ -103,7 +103,7 @@ module.exports = {
 };
 ```
 
-When the tests run, they will call `add(1, 1)` to determine whether the function is pure. Any module methods _not_ registered will be ignored by the tests. See [How the "Pure Tests" Work](#puretests) for more details.
+When the tests run, they will call `add(1, 1)` to determine whether the function is pure. The tests will complain about any module without a `_puretests` property, or with an _un-registered_ method (see examples in **fcore/examples/noncompliant/**). See [How the "Pure Tests" Work](#puretests) for more details.
 
 The `puretest` helper function can be chained to register multiple test cases, like so:
 
@@ -133,9 +133,9 @@ module.exports = {
 
 ### Ignored Files
 
-Any file (or whole sub-directories) within **fcore/** whose name starts with a dot **.** will be ignored by the "pure tests".
+Any file (or whole sub-directories) within **fcore/** whose name starts with a dot (**.**) will be ignored by the "pure tests".
 
-In particular, **fcore/examples/.impure_functions/** contains examples of impure functions. Try renaming this directory to **impure_functions/** (without the dot **.** ), and then run `npm test` to observe the error messages.
+In particular, **fcore/examples/.impure_functions/** contains examples of impure functions. Try renaming this directory to **impure_functions/** (without the dot (**.**) ), and then run `npm test` to observe the error messages.
 
 ## Imperative Shell <a name = "ishell"></a>
 
@@ -155,15 +155,17 @@ For more about this approach, see:
 - ["Integration Tests are a Scam" talk by J. B. Rainsberger](https://www.youtube.com/watch?v=VDfX44fZoMc)
 - [No Mocks Testing](https://github.com/kbilsted/Functional-core-imperative-shell/blob/master/README.md#2-test-isolation---nomock)
 
-That is really all you need to know to begin using this project. The rest of this document is not necessary to read, unless you wish to learn more about how the "pure tests" work.
+That is really all you need to know to begin using this project. The rest of this document is not necessary to read, unless you wish to learn more about the internals of how the "pure tests" work.
 
 ## How the "Pure Tests" Work
 
-There are two tests in **fcore-puretests.test.js**.
+There are four tests in **fcore-puretests.test.js**.
 
-The first runs the methods registered via `puretest` in an isolated VM sandbox, and if no `ReferenceError` is thrown, it passes. In a nutshell.
+The first two tests are simple. For each method registered via `puretest`, check if at least one argument is provided, and that it returns a value when run.
 
-The second runs the methods through the [_is-pure-function_](https://www.npmjs.com/package/is-pure-function) npm package.
+The third test runs each method in an isolated VM sandbox, and if no `ReferenceError` is thrown, it passes. In a nutshell.
+
+The last test runs each method through the [_is-pure-function_](https://www.npmjs.com/package/is-pure-function) npm package.
 
 ### Running in Sandbox
 
@@ -173,12 +175,12 @@ In addition, the function body's code block is rewritten to be wrapped in a clos
 
 However, the initial technique proposed did not allow for calling external pure functions (as in the relaxed definition). Thus, the algorithm had to be extended to make this possible.
 
-This gist of the algorithm is that, in the first round, strictly pure functions that pass the test are remembered. Then, in the second iteration, for the other functions which threw a `ReferenceError` when they tried to call said pure functions, they are rewritten again with said pure function injected into its sandbox so it can be invoked successfully the next time around. This cycle is repeated until no new pure functions are found.
+This gist of the algorithm is that, in the first round, strictly pure functions that pass the test are remembered. Then, in the second iteration, for the other functions which threw a `ReferenceError` when they tried to call said pure functions, they are rewritten again with said pure function injected into its sandbox, so that it can be invoked successfully the next time around. This cycle is repeated until no new pure functions are found.
 
 At the end, all of the registered "pure tests" are run again, and if they all run in isolation without errors, the test passes.
 
-Note that this test completely ignores function _expressions_ (which the second test rectifies).
+Note that this test completely ignores function _expressions_ (which the last test rectifies).
 
-### The _is-pure-function_ package
+### The [_is-pure-function_](https://www.npmjs.com/package/is-pure-function) package
 
-The second test uses this package only for function _expressions_ (and not function _declarations_) because it enforces the strict definition of no external dependencies.
+The last test uses this package only for function _expressions_ (and not function _declarations_) because it enforces the strict definition of no external dependencies.
