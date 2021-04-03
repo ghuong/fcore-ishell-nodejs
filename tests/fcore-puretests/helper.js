@@ -1,7 +1,6 @@
 const fs = require("fs");
 const path = require("path");
 const falafel = require("falafel");
-const mkdirp = require("mkdirp");
 const rewrite = require("./rewrite");
 const config = require("./config");
 
@@ -78,7 +77,7 @@ function rewriteAll(files, fromDir, toDir, pureFunctions = []) {
 }
 
 function copyFile(file, fromDir, toDir) {
-  mkdirp.sync(toDir);
+  fs.mkdirSync(toDir, { recursive: true });
   fs.copyFileSync(path.join(fromDir, file), path.join(toDir, file));
 }
 

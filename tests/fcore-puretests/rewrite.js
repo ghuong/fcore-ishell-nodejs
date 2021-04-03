@@ -3,7 +3,6 @@
 const fs = require("fs");
 const path = require("path");
 const falafel = require("falafel");
-const mkdirp = require("mkdirp");
 
 const config = require("./config");
 
@@ -47,7 +46,7 @@ function rewrite(inputFilename, outputFilename, dependenciesToInject = []) {
     }
   });
 
-  mkdirp.sync(path.dirname(outputFilename));
+  fs.mkdirSync(path.dirname(outputFilename), { recursive: true });
   fs.writeFileSync(outputFilename, output, "utf8");
 }
 
