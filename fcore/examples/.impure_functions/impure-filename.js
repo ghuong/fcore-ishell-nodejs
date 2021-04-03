@@ -13,10 +13,6 @@ const puretest = require("../../.puretest");
 const path = require("path"); // an external dependency
 
 //! IMPURE: relies on external dependency 'path'!
-// function getFilename(filepath) {
-//   return path.basename(filepath); // impure call, will FAIL purity test
-// }
-
 function getFilename(filepath) {
   return path.basename(filepath);
 }
