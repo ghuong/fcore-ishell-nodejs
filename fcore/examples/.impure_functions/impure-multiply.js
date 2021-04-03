@@ -6,7 +6,7 @@
 
 const puretest = require("../../.puretest");
 
-let counter = 0;
+let counter = 0; // external state
 
 const multiply = function (a, b) {
   counter++; //! side-effect

@@ -27,12 +27,12 @@ const isExpression = (function (functionDeclaration) {
  * Usage:
  * module.exports = {
  *    add,
- *    add10,
- *    add50,
+ *    subtract,
+ *    multiply,
  *    _puretests:
- *      puretest(add, 1, 2) // test function call: `add(1, 2)`
- *      .puretest(add10, 3) // test function call: `add10(3)`
- *      .puretest(add50, 7) // test function call: `add50(7)`
+ *      puretest(add, 1, 2)     // add(1, 2)
+ *      .puretest(subtract, 3)  // subtract(3)
+ *      .puretest(multiply, 7)  // multiply(7)
  * }
  */
 function puretest(_functionToTest, ..._args) {
@@ -67,6 +67,7 @@ function puretest(_functionToTest, ..._args) {
               return err; // function threw an error
             }
           },
+          // pass func & args into isPureFunction, return an error if fail
           run2: function () {
             const allPure = this.argsLists.every((args) =>
               isPureFunction(this.func, null, args)
@@ -74,22 +75,57 @@ function puretest(_functionToTest, ..._args) {
 
             return allPure ? null : new Error("function is impure");
           },
+          // return error if it returns undefined
+          run3: function () {
+            const alwaysReturnsValue = this.argsLists.every(
+              (args) => this.func(...args) !== undefined
+            );
+
+            return alwaysReturnsValue
+              ? null
+              : new Error("function returned undefined");
+          },
+          // return error if no args provided
+          hasArgs: function () {
+            const alwaysHasArgs = this.argsLists.every(
+              (args) => args.length > 0
+            );
+
+            return alwaysHasArgs
+              ? null
+              : new Error("function takes no arguments");
+          },
         };
         this._testcases.push(newTestcase);
       }
       return this;
     },
-    _run: function (_alt = false) {
+    _run: function (_mode = false) {
       const pure = []; // names of the functions that pass their test
       const impure = []; // names of the functions that fail their test
       const errors = []; // errors thrown by the functions that fail their test
 
       // run each test case
       this._testcases.forEach((testcase) => {
-        if (_alt && !isExpression(testcase.func)) return; // in alt mode, skip function declarations
+        if (_mode === "isPureExpression" && !isExpression(testcase.func))
+          return; // skip function declarations
 
         // if test throws an error, it fails, otherwise it passes
-        const error = _alt ? testcase.run2() : testcase.run();
+        let error;
+
+        switch (_mode) {
+          case "isPureExpression":
+            error = testcase.run2();
+            break;
+          case "returnsValue":
+            error = testcase.run3();
+            break;
+          case "hasArgs":
+            error = testcase.hasArgs();
+            break;
+          default:
+            error = testcase.run();
+        }
 
         if (error) {
           impure.push(testcase.name);
@@ -102,7 +138,13 @@ function puretest(_functionToTest, ..._args) {
       return { pure, impure, errors };
     },
     _run2: function () {
-      return this._run(true);
+      return this._run("isPureExpression");
+    },
+    _run3: function() {
+      return this._run("returnsValue");
+    },
+    _hasArgs: function() {
+      return this._run("hasArgs");
     },
   }._init(_functionToTest, ..._args);
 }
