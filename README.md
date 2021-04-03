@@ -20,6 +20,8 @@ For an introduction to this architectural pattern, see the talk [Boundaries](htt
 
 ## Getting Started <a name = "getting_started"></a>
 
+[Github Docs: Creating a Repository From a Template](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-from-a-template#creating-a-repository-from-a-template)
+
 Install dependencies with `npm install`, then run tests with `npm test`.
 
 ## Project Structure <a name = "project_structure"></a>
