@@ -1,8 +1,8 @@
-const { fail, ok } = require("assert");
+const { fail } = require("assert");
 const path = require("path");
 
-const config = require("./config");
-const helper = require("./helper");
+const config = require("./ishell/config");
+const helper = require("./ishell/helper");
 
 describe("every function in fcore/", () => {
   let fcoreFiles; // filepaths relative to fcore/
