@@ -8,13 +8,16 @@ const rewriteModulesIntoSandboxes = require("./ishell/rewriteModulesIntoSandboxe
 const { runPuretests } = require("./ishell/runPuretests");
 
 describe("every function in fcore/", () => {
+  const fcoreDir = `${__dirname}/../../../fcore`; // directory of fcore/
+  const rewriteDir = path.join(fcoreDir, ".rewrite"); // directory to re-write the fcore/ files
+
   let fcoreFiles; // filepaths relative to fcore/
   let fcoreFilepaths; // absolute filepaths
 
   before(() => {
-    fsHelper.removeDir(config.rewriteDir); // nuke rewrites directory
-    fcoreFiles = fsHelper.listFiles(config.fcoreDir);
-    fcoreFilepaths = fcoreFiles.map((f) => path.join(config.fcoreDir, f));
+    fsHelper.removeDir(rewriteDir); // nuke rewrites directory
+    fcoreFiles = fsHelper.listFiles(fcoreDir);
+    fcoreFilepaths = fcoreFiles.map((f) => path.join(fcoreDir, f));
   });
 
   it("takes at least one argument", () => {
@@ -58,17 +61,10 @@ describe("every function in fcore/", () => {
   it("can run in an isolated sandbox", () => {
     console.log("\nTest: it can run in an isolated sandbox");
 
-    // copy puretest file //TODO: make puretest globally available, then remove this
-    // fsHelper.copyFile(
-    //   config.puretestFilename,
-    //   config.fcoreDir,
-    //   config.rewriteDir
-    // );
-
     const sandboxedModules = rewriteModulesIntoSandboxes(
       fcoreFiles,
-      config.fcoreDir,
-      config.rewriteDir
+      fcoreDir,
+      rewriteDir
     );
 
     const { successMsg, failMsg } = runPuretests(sandboxedModules, fcoreFiles);
@@ -78,7 +74,7 @@ describe("every function in fcore/", () => {
       fail(fullFailMsg);
     } else {
       console.log(`\n${successMsg}`);
-      fsHelper.removeDir(config.rewriteDir);
+      fsHelper.removeDir(rewriteDir);
     }
   });
 

@@ -1,7 +1,7 @@
-const path = require("path");
+// const path = require("path");
 
-const fcoreDir = `${__dirname}/../../../../fcore`; // directory of fcore/
-const rewriteDir = path.join(fcoreDir, ".rewrite"); // directory to re-write the fcore/ files
+// const fcoreDir = `${__dirname}/../../../../fcore`; // directory of fcore/
+// const rewriteDir = path.join(fcoreDir, ".rewrite"); // directory to re-write the fcore/ files
 
 const testModes = {
   hasArgs: "hasArgs",
@@ -17,7 +17,7 @@ module.exports = {
   puretestsProp,
   puretestHelper,
   puretestFilename,
-  fcoreDir,
-  rewriteDir,
+  // fcoreDir,
+  // rewriteDir,
   testModes,
 };
