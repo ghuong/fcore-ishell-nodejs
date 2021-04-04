@@ -8,106 +8,85 @@ const rewriteSrcFiles = require("./ishell/rewriteSrcFiles");
 
 describe("every function in fcore/", () => {
   let fcoreFiles; // filepaths relative to fcore/
-  let fcoreFullFilepaths; // absolute filepaths
+  let fcoreFilepaths; // absolute filepaths
 
   before(() => {
     fsHelper.removeDir(config.rewriteDir); // nuke rewrites directory
     fcoreFiles = fsHelper.listFiles(config.fcoreDir);
-    fcoreFullFilepaths = fcoreFiles.map((f) => path.join(config.fcoreDir, f));
+    fcoreFilepaths = fcoreFiles.map((f) => path.join(config.fcoreDir, f));
   });
 
-  function assertAllPure(files, tester, failPreludeMsg, displayPureMsg = true) {
+  function runPuretests(files, tester) {
     const pureFuncsPerFile = files.map((x) => []);
     const impureFuncsPerFile = files.map((x) => []);
     const errorsPerFile = files.map((x) => []);
-
-    let allPure = true;
 
     // Test all the modules one last time
     files.forEach((file, iFile) => {
       const { pure, impure, errors } = tester(file);
 
-      if (impure.length > 0) {
-        allPure = false;
-      }
+      pureFuncsPerFile[iFile] = pure;
+      impureFuncsPerFile[iFile] = impure;
+      errorsPerFile[iFile] = errors;
 
-      pure.forEach((pureFunc) => {
-        pureFuncsPerFile[iFile].push(pureFunc);
-      });
-
-      impure.forEach((impureFunc) => {
-        impureFuncsPerFile[iFile].push(impureFunc);
-      });
-
-      errors.forEach((error) => {
-        errorsPerFile[iFile].push(error);
-      });
+      if (impure.length > 0) allPure = false;
     });
 
-    if (displayPureMsg) {
-      // display information about pure functions for each module
-      const pureMessage = pureFuncsPerFile
-        .map((pureInFile, iFile) => {
-          if (pureInFile.length === 0) return "";
+    const successMsg = pureFuncsPerFile
+      .map((pureInFile, iFile) => {
+        if (pureInFile.length === 0) return "";
 
-          const delim = "\n ✅ ";
-          const displayPure = delim + pureInFile.join(delim);
-          return `${fcoreFiles[iFile]}:${displayPure}\n\n`;
-        })
-        .join("");
-
-      console.log(`\nPure functions in fcore/:\n\n${pureMessage}`);
-    }
+        const delim = "\n ✅ ";
+        const pureFuncs = delim + pureInFile.join(delim);
+        return `${fcoreFiles[iFile]}:${pureFuncs}\n\n`;
+      })
+      .join("");
 
     // Fail if there are still impure functions remaining
-    if (!allPure) {
-      const impureMessage = impureFuncsPerFile
-        .map((impureInFile, iFile) => {
-          if (impureInFile.length === 0) return "";
+    const failMsg = impureFuncsPerFile
+      .map((impureInFile, iFile) => {
+        if (impureInFile.length === 0) return "";
 
-          const delim = "\n ❌ ";
-          const displayImpure =
-            delim +
-            impureInFile
-              .map((impureFunc, iImp) => {
-                const error = errorsPerFile[iFile][iImp];
-                return `\`${impureFunc}\` threw: ${error}`;
-              })
-              .join(delim);
-          return `${fcoreFiles[iFile]}:${displayImpure}\n\n`;
-        })
-        .join("");
+        const delim = "\n ❌ ";
+        const impureFuncs =
+          delim +
+          impureInFile
+            .map((impureFunc, iImp) => {
+              const error = errorsPerFile[iFile][iImp];
+              return `\`${impureFunc}\` threw: ${error}`;
+            })
+            .join(delim);
+        return `${fcoreFiles[iFile]}:${impureFuncs}\n\n`;
+      })
+      .join("");
 
-      fail(`\n\n${failPreludeMsg}:\n\n${impureMessage}`);
-    }
-
-    return allPure;
+    return { successMsg, failMsg };
   }
 
   it("takes at least one argument", () => {
-    console.log("Test: it takes at least one argument");
-    const failPreludeMsg = "These functions can be called with zero arguments";
-    assertAllPure(
-      fcoreFullFilepaths,
-      testHelper.runPuretests4,
-      failPreludeMsg,
-      false
-    );
+    console.log("\nTest: it takes at least one argument");
+
+    const { failMsg } = runPuretests(fcoreFilepaths, testHelper.runPuretests4);
+
+    if (failMsg) {
+      const fullFailMsg = `\n\nThese functions can be called with zero arguments:\n\n${failMsg}`;
+      fail(fullFailMsg);
+    }
   });
 
   it("returns a value", () => {
-    console.log("Test: it returns a value");
-    const failPreludeMsg = "These functions did not return a value";
-    assertAllPure(
-      fcoreFullFilepaths,
-      testHelper.runPuretests3,
-      failPreludeMsg,
-      false
-    );
+    console.log("\nTest: it returns a value");
+
+    const { failMsg } = runPuretests(fcoreFilepaths, testHelper.runPuretests3);
+
+    if (failMsg) {
+      const fullFailMsg = `\n\nThese functions did not return a value:\n\n${failMsg}`;
+      fail(fullFailMsg);
+    }
   });
 
   it("can run in an isolated sandbox", () => {
-    console.log("Test: it can run in an isolated sandbox");
+    console.log("\nTest: it can run in an isolated sandbox");
 
     /**
      * The files in fcore/ will be rewritten, wrapping all function declarations to run in isolated VM sandboxes.
@@ -177,23 +156,33 @@ describe("every function in fcore/", () => {
       });
     } while (numPureFuncsFoundThisIteration > 0);
 
-    const failPreludeMsg =
-      "These functions failed to run in isolated VM sandboxes";
-    if (
-      assertAllPure(sandboxedModules, testHelper.runPuretests, failPreludeMsg)
-    ) {
-      fsHelper.removeDir(config.rewriteDir);
+    const { successMsg, failMsg } = runPuretests(
+      sandboxedModules,
+      testHelper.runPuretests
+    );
+
+    if (failMsg) {
+      const fullFailMsg = `\n\nThese functions failed to run in isolated VM sandboxes:\n\n${failMsg}The re-written source code can be found in fcore/.rewrite/\n`;
+      return fail(fullFailMsg);
     } else {
-      console.error(
-        "The re-written source code can be found in fcore/.rewrite/\n"
-      );
+      console.log(`\n${successMsg}`);
+      fsHelper.removeDir(config.rewriteDir);
     }
   });
 
   it("is a pure function expression", () => {
-    console.log("Test: it is a pure function expression");
-    const failPreludeMsg =
-      "The npm module `is-pure-function` determined these functions to be impure";
-    assertAllPure(fcoreFullFilepaths, testHelper.runPuretests2, failPreludeMsg);
+    console.log("\nTest: it is a pure function expression");
+
+    const { successMsg, failMsg } = runPuretests(
+      fcoreFilepaths,
+      testHelper.runPuretests2
+    );
+
+    if (failMsg) {
+      const fullFailMsg = `\n\nThe npm module \`is-pure-function\` determined these functions to be impure:\n\n${failMsg}`;
+      fail(fullFailMsg);
+    } else {
+      console.log(`\n${successMsg}`);
+    }
   });
 });

@@ -35,6 +35,24 @@ function runPuretests(fcoreModuleName, _mode) {
   return fcoreModule[_puretests]._run(_mode);
 }
 
+function isPuretestsDefined(fcoreModuleName) {
+  const fcoreModule = require(fcoreModuleName);
+
+  if (!fcoreModule[_puretests]) {
+    throw new Error(
+      `Missing property \`${_puretests}\` in \`${fcoreModuleName}\`.\nSee docs.`
+    );
+  }
+
+  methodsOf(fcoreModule).forEach((method) => {
+    if (!fcoreModule[_puretests]._hasTestFor(method)) {
+      throw new Error(
+        `Missing puretest for method \`${method}\` in \`${fcoreModuleName}\`.\nSee docs.`
+      );
+    }
+  });
+}
+
 // Alternate version of puretest
 function runPuretests2(fcoreModuleName) {
   return runPuretests(fcoreModuleName, "isPureExpression");
