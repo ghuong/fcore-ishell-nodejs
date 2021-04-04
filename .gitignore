@@ -2,7 +2,7 @@
 # Source: https://github.com/nrwl/full-stack-react-example-app/blob/master/.gitignore
 
 # Re-written fcore modules
-/fcore/.rewrite
+**/.rewrite/
 
 # dev environment-specific
 .env
