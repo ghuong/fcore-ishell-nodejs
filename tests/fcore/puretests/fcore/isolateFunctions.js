@@ -1,5 +1,3 @@
-const falafel = require("falafel");
-
 /**
  * Parse the given source code for a module,
  * and for each function declaration, re-write its code-block to:
@@ -10,7 +8,7 @@ const falafel = require("falafel");
  * @param {Array<String>} ignoreFunctions names of functions to NOT re-write
  * @returns source code string representing the re-written module
  */
-function isolateFunctions(sourceCode, dependencies) {
+function isolateFunctions(sourceCode, dependencies, falafel) {
   return falafel(sourceCode, (node) => {
     // find each function body's code-block
     if (
@@ -44,4 +42,10 @@ function isolateFunctions(sourceCode, dependencies) {
   });
 }
 
-module.exports = isolateFunctions;
+const falafel = require("falafel");
+const puretest = require("../../../../fcore/.puretest");
+
+module.exports = {
+  isolateFunctions,
+  _puretests: puretest(isolateFunctions, "function foo(a) { return a; }", ["myDep"], falafel)
+}

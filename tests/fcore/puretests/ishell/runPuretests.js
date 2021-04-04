@@ -6,7 +6,7 @@ const { puretestsProp: _puretests } = require("./config");
  * @param {Array<String>} files list of filepaths
  * @param {String} fileNames names of files to display in messages
  * @param {String} testMode puretest mode (optional)
- * @returns object: { successMsg, failMsg }
+ * @returns object: { successMsg, failMsg }, messages describing the pure and impure functions
  */
 function runPuretests(files, fileNames, testMode) {
   const pureFuncsPerFile = files.map((x) => []);
@@ -30,7 +30,7 @@ function runPuretests(files, fileNames, testMode) {
 
       const delim = "\n ✅ ";
       const pureFuncs = delim + pureInFile.join(delim);
-      return `${fileNames[iFile]}:${pureFuncs}\n\n`; //!!!!! THIS LINE <!++@
+      return `${fileNames[iFile]}:${pureFuncs}\n\n`;
     })
     .join("");
 

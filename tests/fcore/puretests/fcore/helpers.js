@@ -23,7 +23,12 @@ function getReferenceFromError(referenceError) {
   }
 }
 
+const puretest = require("../../../../fcore/.puretest");
+
 module.exports = {
   methodsOf,
   getReferenceFromError,
+  _puretests:
+    puretest(methodsOf, { method: () => {} })
+    .puretest(getReferenceFromError, new ReferenceError("myRef is not defined"))
 };

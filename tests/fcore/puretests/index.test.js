@@ -7,7 +7,6 @@ const fsHelper = require("./ishell/fsHelper");
 const rewriteModulesIntoSandboxes = require("./ishell/rewriteModulesIntoSandboxes");
 const { runPuretests } = require("./ishell/runPuretests");
 
-
 describe("every function in fcore/", () => {
   let fcoreFiles; // filepaths relative to fcore/
   let fcoreFilepaths; // absolute filepaths

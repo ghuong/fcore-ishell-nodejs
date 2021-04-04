@@ -1,7 +1,8 @@
 const fs = require("fs");
 const path = require("path");
+const falafel = require("falafel");
 
-const isolateFunctions = require("../fcore/isolateFunctions");
+const { isolateFunctions } = require("../fcore/isolateFunctions");
 
 /**
  * Re-write all files' source code so that their functions run in isolated sandboxes.
@@ -27,7 +28,7 @@ function rewriteSrcFiles(files, fromDir, toDir, depsPerFile) {
  */
 function rewriteSrcFile(inputFile, outputFile, dependencies) {
   const sourceCode = fs.readFileSync(inputFile, "utf8");
-  const rewrittenSourceCode = isolateFunctions(sourceCode, dependencies);
+  const rewrittenSourceCode = isolateFunctions(sourceCode, dependencies, falafel);
 
   fs.mkdirSync(path.dirname(outputFile), { recursive: true });
   fs.writeFileSync(outputFile, rewrittenSourceCode, "utf8");
