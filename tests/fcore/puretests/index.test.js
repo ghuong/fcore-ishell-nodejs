@@ -12,7 +12,7 @@ describe("every function in fcore/", () => {
 
   before(() => {
     fsHelper.removeDir(config.rewriteDir); // nuke rewrites directory
-    fcoreFiles = fsHelper.getRelativeFilepathsInDir(config.fcoreDir);
+    fcoreFiles = fsHelper.listFiles(config.fcoreDir);
     fcoreFullFilepaths = fcoreFiles.map((f) => path.join(config.fcoreDir, f));
   });
 

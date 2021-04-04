@@ -2,12 +2,11 @@ const fs = require("fs");
 const path = require("path");
 
 /**
- * Get all relative filepaths in given directory, recursively,
- * but ignoring files and directories starting with dot: .
- * @param {String} dir directory path to look in
- * @returns {Array<String>} relative filepaths in directory
+ * List files in given directory recursively
+ * @param {String} dir path of directory
+ * @returns {Array<String>} relative filepaths
  */
-function getRelativeFilepathsInDir(dir) {
+function listFiles(dir) {
   const files = [];
 
   /**
@@ -57,7 +56,7 @@ function copyFile(file, fromDir, toDir) {
 }
 
 module.exports = {
-  getRelativeFilepathsInDir,
+  listFiles,
   removeDir,
   copyFile,
 };
