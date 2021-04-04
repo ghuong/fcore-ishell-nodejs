@@ -1,11 +1,4 @@
 /**
- * Clear require cache to force reload of modules
- */
-function clearRequireCache() {
-  Object.keys(require.cache).forEach((key) => delete require.cache[key]);
-}
-
-/**
  * Get all names of methods of a given object
  * @param {Object} obj object
  * @returns list of names of methods on the object
@@ -31,7 +24,6 @@ function getReferenceFromError(referenceError) {
 }
 
 module.exports = {
-  clearRequireCache,
   methodsOf,
   getReferenceFromError,
 };

@@ -1,4 +1,4 @@
-const { methodsOf } = require("./helpers");
+const { methodsOf } = require("../fcore/helpers");
 const { puretestsProp: _puretests } = require("./config");
 
 /**

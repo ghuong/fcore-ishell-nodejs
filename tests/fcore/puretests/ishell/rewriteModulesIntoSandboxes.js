@@ -1,9 +1,9 @@
 const path = require("path");
 
 const rewriteSrcFiles = require("./rewriteSrcFiles");
-const helpers = require("./helpers");
-
+const clearRequireCache = require("./clearRequireCache");
 const { runPuretestsInModule } = require("./runPuretests");
+const { getReferenceFromError } = require("../fcore/helpers");
 
 /**
  * Repeatedly re-writes the given modules to run in isolated sandboxes,
@@ -29,7 +29,7 @@ function rewriteModulesIntoSandboxes(modules, fromDir, toDir) {
     // This way, functions which call other pure functions can be recognized as pure
     rewriteSrcFiles(modules, fromDir, toDir, pureDepsPerMod);
 
-    helpers.clearRequireCache(); // to force reload of the newly re-written files
+    clearRequireCache(); // to force reload of the newly re-written files
 
     // test each rewritten module
     sandboxedModules.forEach((mod, iMod) => {
@@ -37,7 +37,7 @@ function rewriteModulesIntoSandboxes(modules, fromDir, toDir) {
 
       errors.forEach((error) => {
         if (error.name === "ReferenceError") {
-          const dependency = helpers.getReferenceFromError(error);
+          const dependency = getReferenceFromError(error);
           depsPerMod[iMod].push(dependency);
         }
       });
