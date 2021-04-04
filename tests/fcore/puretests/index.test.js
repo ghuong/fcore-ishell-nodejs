@@ -2,15 +2,17 @@ const { fail } = require("assert");
 const path = require("path");
 
 const config = require("./ishell/config");
-const helper = require("./ishell/helper");
+const fsHelper = require("./ishell/fsHelper");
+const testHelper = require("./ishell/testHelper");
+const rewriteSrcFiles = require("./ishell/rewriteSrcFiles");
 
 describe("every function in fcore/", () => {
   let fcoreFiles; // filepaths relative to fcore/
   let fcoreFullFilepaths; // absolute filepaths
 
   before(() => {
-    helper.removeDir(config.rewriteDir); // nuke rewrites directory
-    fcoreFiles = helper.getRelativeFilepathsInDir(config.fcoreDir);
+    fsHelper.removeDir(config.rewriteDir); // nuke rewrites directory
+    fcoreFiles = fsHelper.getRelativeFilepathsInDir(config.fcoreDir);
     fcoreFullFilepaths = fcoreFiles.map((f) => path.join(config.fcoreDir, f));
   });
 
@@ -76,27 +78,33 @@ describe("every function in fcore/", () => {
         })
         .join("");
 
-      fail(
-        `\n\n${failPreludeMsg}:\n\n${impureMessage}`
-      );
+      fail(`\n\n${failPreludeMsg}:\n\n${impureMessage}`);
     }
 
     return allPure;
   }
 
-    it("takes at least one argument", () => {
-      console.log("Test: it takes at least one argument");
-      const failPreludeMsg =
-        "These functions can be called with zero arguments";
-      assertAllPure(fcoreFullFilepaths, helper.runPuretests4, failPreludeMsg, false);
-    });
+  it("takes at least one argument", () => {
+    console.log("Test: it takes at least one argument");
+    const failPreludeMsg = "These functions can be called with zero arguments";
+    assertAllPure(
+      fcoreFullFilepaths,
+      testHelper.runPuretests4,
+      failPreludeMsg,
+      false
+    );
+  });
 
-    it("returns a value", () => {
-      console.log("Test: it returns a value");
-      const failPreludeMsg =
-        "These functions did not return a value";
-      assertAllPure(fcoreFullFilepaths, helper.runPuretests3, failPreludeMsg, false);
-    });
+  it("returns a value", () => {
+    console.log("Test: it returns a value");
+    const failPreludeMsg = "These functions did not return a value";
+    assertAllPure(
+      fcoreFullFilepaths,
+      testHelper.runPuretests3,
+      failPreludeMsg,
+      false
+    );
+  });
 
   it("can run in an isolated sandbox", () => {
     console.log("Test: it can run in an isolated sandbox");
@@ -109,8 +117,11 @@ describe("every function in fcore/", () => {
      * will throw a ReferenceError when it runs, denoting it as impure.
      * Then, this test will fail if ANY such function is found to be impure, and pass otherwise.
      */
-    let sandboxedModules = [];
-    helper.copyFile(
+    const sandboxedModules = fcoreFiles.map((file) =>
+      path.join(config.rewriteDir, file)
+    );
+    // copy `puretest.js` into .rewrite/
+    fsHelper.copyFile(
       config.puretestFilename,
       config.fcoreDir,
       config.rewriteDir
@@ -127,22 +138,22 @@ describe("every function in fcore/", () => {
 
       // Rewrite fcore modules to run in sandboxes with pure dependencies injected
       // This way, functions which call other pure functions can be recognized as pure
-      sandboxedModules = helper.rewriteAll(
+      rewriteSrcFiles(
         fcoreFiles,
         config.fcoreDir, // from fcore/
         config.rewriteDir, // to fcore/.rewrite
         pureDepsPerFile // inject pure dependencies into sandboxes
       );
 
-      helper.clearRequireCache(); // to force reload of the newly rewritten files
+      testHelper.clearRequireCache(); // to force reload of the newly re-written files
 
       // test each rewritten module
       sandboxedModules.forEach((file, iFile) => {
-        const { pure, errors } = helper.runPuretests(file);
+        const { pure, errors } = testHelper.runPuretests(file);
 
         errors.forEach((error) => {
           if (error.name === "ReferenceError") {
-            const dependency = helper.getReferenceFromError(error);
+            const dependency = testHelper.getReferenceFromError(error);
             depsPerFile[iFile].push(dependency);
           }
         });
@@ -166,17 +177,23 @@ describe("every function in fcore/", () => {
       });
     } while (numPureFuncsFoundThisIteration > 0);
 
-    const failPreludeMsg = "These functions failed to run in isolated VM sandboxes";
-    if(assertAllPure(sandboxedModules, helper.runPuretests, failPreludeMsg)) {
-      helper.removeDir(config.rewriteDir);
+    const failPreludeMsg =
+      "These functions failed to run in isolated VM sandboxes";
+    if (
+      assertAllPure(sandboxedModules, testHelper.runPuretests, failPreludeMsg)
+    ) {
+      fsHelper.removeDir(config.rewriteDir);
     } else {
-      console.error("The re-written source code can be found in fcore/.rewrite/\n");
+      console.error(
+        "The re-written source code can be found in fcore/.rewrite/\n"
+      );
     }
   });
 
   it("is a pure function expression", () => {
     console.log("Test: it is a pure function expression");
-    const failPreludeMsg = "The npm module `is-pure-function` determined these functions to be impure";
-    assertAllPure(fcoreFullFilepaths, helper.runPuretests2, failPreludeMsg);
+    const failPreludeMsg =
+      "The npm module `is-pure-function` determined these functions to be impure";
+    assertAllPure(fcoreFullFilepaths, testHelper.runPuretests2, failPreludeMsg);
   });
 });
