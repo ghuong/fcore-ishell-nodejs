@@ -1,13 +1,8 @@
-const { fail } = require("assert");
-const path = require("path");
-
-const config = require("./ishell/config");
-const fsHelper = require("./ishell/fsHelper");
-
-const rewriteModulesIntoSandboxes = require("./ishell/rewriteModulesIntoSandboxes");
-const { runPuretests } = require("./ishell/runPuretests");
-
 describe("every function in fcore/", () => {
+  const { fail } = require("assert");
+  const path = require("path");
+  const puretester = require("puretester");
+
   const fcoreDir = `${__dirname}/../../../fcore`; // directory of fcore/
   const rewriteDir = path.join(fcoreDir, ".rewrite"); // directory to re-write the fcore/ files
 
@@ -15,18 +10,18 @@ describe("every function in fcore/", () => {
   let fcoreFilepaths; // absolute filepaths
 
   before(() => {
-    fsHelper.removeDir(rewriteDir); // nuke rewrites directory
-    fcoreFiles = fsHelper.listFiles(fcoreDir);
-    fcoreFilepaths = fcoreFiles.map((f) => path.join(fcoreDir, f));
+    const { files, filepaths } = puretester.setup(fcoreDir, rewriteDir);
+    fcoreFiles = files;
+    fcoreFilepaths = filepaths;
   });
 
   it("takes at least one argument", () => {
     console.log("\nTest: it takes at least one argument");
 
-    const { failMsg } = runPuretests(
+    const { failMsg } = puretester.runPuretests(
       fcoreFilepaths,
       fcoreFiles,
-      config.testModes.hasArgs
+      puretester.testModes.hasArgs
     );
 
     if (failMsg) {
@@ -38,10 +33,10 @@ describe("every function in fcore/", () => {
   it("returns a value", () => {
     console.log("\nTest: it returns a value");
 
-    const { failMsg } = runPuretests(
+    const { failMsg } = puretester.runPuretests(
       fcoreFilepaths,
       fcoreFiles,
-      config.testModes.returnsValue
+      puretester.testModes.returnsValue
     );
 
     if (failMsg) {
@@ -61,30 +56,33 @@ describe("every function in fcore/", () => {
   it("can run in an isolated sandbox", () => {
     console.log("\nTest: it can run in an isolated sandbox");
 
-    const sandboxedModules = rewriteModulesIntoSandboxes(
+    const sandboxedModules = puretester.rewriteModulesIntoSandboxes(
       fcoreFiles,
       fcoreDir,
       rewriteDir
     );
 
-    const { successMsg, failMsg } = runPuretests(sandboxedModules, fcoreFiles);
+    const { successMsg, failMsg } = puretester.runPuretests(
+      sandboxedModules,
+      fcoreFiles
+    );
 
     if (failMsg) {
       const fullFailMsg = `\n\nThese functions failed to run in isolated VM sandboxes:\n\n${failMsg}The re-written source code can be found in fcore/.rewrite/\n`;
       fail(fullFailMsg);
     } else {
       console.log(`\n${successMsg}`);
-      fsHelper.removeDir(rewriteDir);
+      puretester.teardown(rewriteDir);
     }
   });
 
   it("is a pure function expression", () => {
     console.log("\nTest: it is a pure function expression");
 
-    const { successMsg, failMsg } = runPuretests(
+    const { successMsg, failMsg } = puretester.runPuretests(
       fcoreFilepaths,
       fcoreFiles,
-      config.testModes.isPureExpression
+      puretester.testModes.isPureExpression
     );
 
     if (failMsg) {

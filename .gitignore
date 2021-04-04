@@ -15,6 +15,7 @@
 # dependencies
 /node_modules/*
 !/node_modules/puretest
+!/node_modules/puretester
 
 # IDEs and editors
 /.idea
