@@ -4,8 +4,6 @@
  * then run `npm test` to see how the tests pass even though they shouldn't
  */
 
-const puretest = require("../../.puretest");
-
 let counter = 0; // external state
 
 const multiply = function (a, b) {
@@ -22,6 +20,8 @@ const multiply3 = (a, b) => {
   counter++;
   return a * b;
 };
+
+const puretest = require("puretest");
 
 module.exports = {
   multiply,

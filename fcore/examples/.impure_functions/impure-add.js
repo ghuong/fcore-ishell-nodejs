@@ -4,8 +4,6 @@
  * then run `npm test` to see how the tests fail
  */
 
-const puretest = require("../../.puretest");
-
 //! IMPURE: produces side-effect
 function add(a, b) {
   launchNukes();
@@ -25,6 +23,8 @@ function launchNukes() {
 function declareWar() {
   console.log("Declaring war! Impure side-effect!");
 }
+
+const puretest = require("puretest");
 
 module.exports = {
   add,

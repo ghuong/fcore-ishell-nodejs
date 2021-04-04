@@ -1,5 +1,3 @@
-const puretest = require("../../../.puretest");
-
 function add(a, b) {
   return a + b;
 }
@@ -7,6 +5,8 @@ function add(a, b) {
 function add10(a) {
   return add(a, 10); // call to pure function in same file
 }
+
+const puretest = require("puretest");
 
 module.exports = {
   add,

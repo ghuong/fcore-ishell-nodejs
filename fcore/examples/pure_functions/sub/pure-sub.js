@@ -1,5 +1,3 @@
-const puretest = require("../../../.puretest");
-
 // To call an external pure function, require it like so:
 const { add } = require("../add/pure-add");
 // const add = require("../add/pure-add").add; // or without destructuring
@@ -7,6 +5,8 @@ const { add } = require("../add/pure-add");
 function sub(a, b) {
   return add(a, -b); // call pure function
 }
+
+const puretest = require("puretest");
 
 module.exports = {
   sub,

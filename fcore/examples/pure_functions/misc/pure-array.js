@@ -1,8 +1,8 @@
-const puretest = require("../../../.puretest");
-
 function isArray(arr) {
   return Array.isArray(arr); // using existing global variable
 }
+
+const puretest = require("puretest");
 
 module.exports = {
   isArray,

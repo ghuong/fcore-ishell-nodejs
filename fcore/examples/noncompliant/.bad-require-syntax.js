@@ -4,7 +4,7 @@
  * then run `npm test` to see how the tests fail
  */
 
-const puretest = require("../../.puretest");
+const puretest = require("puretest");
 
 //! Renaming the exported function is NOT supported:
 const myRenamedAdd = require("../pure_functions/add/pure-add").add;

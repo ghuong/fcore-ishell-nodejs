@@ -43,7 +43,7 @@ function isolateFunctions(sourceCode, dependencies, falafel) {
 }
 
 const falafel = require("falafel");
-const puretest = require("../../../../fcore/.puretest");
+const puretest = require("puretest");
 
 module.exports = {
   isolateFunctions,

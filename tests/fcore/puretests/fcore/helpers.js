@@ -23,7 +23,7 @@ function getReferenceFromError(referenceError) {
   }
 }
 
-const puretest = require("../../../../fcore/.puretest");
+const puretest = require("puretest");
 
 module.exports = {
   methodsOf,

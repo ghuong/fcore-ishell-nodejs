@@ -59,11 +59,11 @@ describe("every function in fcore/", () => {
     console.log("\nTest: it can run in an isolated sandbox");
 
     // copy puretest file //TODO: make puretest globally available, then remove this
-    fsHelper.copyFile(
-      config.puretestFilename,
-      config.fcoreDir,
-      config.rewriteDir
-    );
+    // fsHelper.copyFile(
+    //   config.puretestFilename,
+    //   config.fcoreDir,
+    //   config.rewriteDir
+    // );
 
     const sandboxedModules = rewriteModulesIntoSandboxes(
       fcoreFiles,

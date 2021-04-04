@@ -13,7 +13,8 @@
 /out-tsc
 
 # dependencies
-/node_modules
+/node_modules/*
+!/node_modules/puretest
 
 # IDEs and editors
 /.idea

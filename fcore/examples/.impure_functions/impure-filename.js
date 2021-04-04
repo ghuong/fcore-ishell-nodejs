@@ -8,14 +8,14 @@
  * Example of an IMPURE function calling an external dependency
  */
 
-const puretest = require("../../.puretest");
-
 const path = require("path"); // an external dependency
 
 //! IMPURE: relies on external dependency 'path'!
 function getFilename(filepath) {
   return path.basename(filepath);
 }
+
+const puretest = require("puretest");
 
 module.exports = {
   getFilename,

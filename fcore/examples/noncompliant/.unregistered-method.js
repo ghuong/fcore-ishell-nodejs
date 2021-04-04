@@ -1,4 +1,4 @@
-const puretest = require("../../.puretest");
+const puretest = require("puretest");
 
 function registeredWithPuretest(a) {
   return a;

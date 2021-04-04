@@ -1,5 +1,3 @@
-const puretest = require("../../../.puretest");
-
 const multiply = function (a, b) {
   return a * b;
 };
@@ -11,6 +9,8 @@ const multiply2 = function(a, b) {
 const multiply3 = (a, b) => {
   return a * b;
 };
+
+const puretest = require("puretest");
 
 module.exports = {
   multiply,
