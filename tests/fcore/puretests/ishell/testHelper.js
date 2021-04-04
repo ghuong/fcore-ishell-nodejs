@@ -1,4 +1,4 @@
-const config = require("./config");
+const { puretestsProp: _puretests } = require("./config");
 
 /**
  * Clear require cache to force reload of modules
@@ -18,21 +18,21 @@ function clearRequireCache() {
 function runPuretests(fcoreModuleName, _mode) {
   const fcoreModule = require(fcoreModuleName);
 
-  if (!fcoreModule._puretests) {
+  if (!fcoreModule[_puretests]) {
     throw new Error(
-      `Missing property \`_puretests\` in \`${fcoreModuleName}\`.\nSee docs.`
+      `Missing property \`${_puretests}\` in \`${fcoreModuleName}\`.\nSee docs.`
     );
   }
 
   methodsOf(fcoreModule).forEach((method) => {
-    if (!fcoreModule._puretests._hasTestFor(method)) {
+    if (!fcoreModule[_puretests]._hasTestFor(method)) {
       throw new Error(
         `Missing puretest for method \`${method}\` in \`${fcoreModuleName}\`.\nSee docs.`
       );
     }
   });
 
-  return fcoreModule._puretests._run(_mode);
+  return fcoreModule[_puretests]._run(_mode);
 }
 
 // Alternate version of puretest
