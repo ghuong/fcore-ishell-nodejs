@@ -1,14 +1,14 @@
-const { methodsOf } = require("./testHelper");
+const { methodsOf } = require("./helpers");
 const { puretestsProp: _puretests } = require("./config");
 
 /**
  * Runs all puretests in the given files
  * @param {Array<String>} files list of filepaths
- * @param {String} filesShortened list of relative filepaths for messages
+ * @param {String} fileNames names of files to display in messages
  * @param {String} testMode puretest mode (optional)
  * @returns object: { successMsg, failMsg }
  */
-function runPuretests(files, filesShortened, testMode) {
+function runPuretests(files, fileNames, testMode) {
   const pureFuncsPerFile = files.map((x) => []);
   const impureFuncsPerFile = files.map((x) => []);
   const errorsPerFile = files.map((x) => []);
@@ -30,7 +30,7 @@ function runPuretests(files, filesShortened, testMode) {
 
       const delim = "\n ✅ ";
       const pureFuncs = delim + pureInFile.join(delim);
-      return `${filesShortened[iFile]}:${pureFuncs}\n\n`; //!!!!! THIS LINE <!++@
+      return `${fileNames[iFile]}:${pureFuncs}\n\n`; //!!!!! THIS LINE <!++@
     })
     .join("");
 
@@ -48,7 +48,7 @@ function runPuretests(files, filesShortened, testMode) {
             return `\`${impureFunc}\` threw: ${error}`;
           })
           .join(delim);
-      return `${filesShortened[iFile]}:${impureFuncs}\n\n`;
+      return `${fileNames[iFile]}:${impureFuncs}\n\n`;
     })
     .join("");
 
