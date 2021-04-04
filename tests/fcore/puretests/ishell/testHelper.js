@@ -18,7 +18,13 @@ function clearRequireCache() {
 function runPuretests(fcoreModuleName, _mode) {
   const fcoreModule = require(fcoreModuleName);
 
-  getMethods(fcoreModule).forEach((method) => {
+  if (!fcoreModule._puretests) {
+    throw new Error(
+      `Missing property \`_puretests\` in \`${fcoreModuleName}\`.\nSee docs.`
+    );
+  }
+
+  methodsOf(fcoreModule).forEach((method) => {
     if (!fcoreModule._puretests._hasTestFor(method)) {
       throw new Error(
         `Missing puretest for method \`${method}\` in \`${fcoreModuleName}\`.\nSee docs.`
@@ -26,25 +32,7 @@ function runPuretests(fcoreModuleName, _mode) {
     }
   });
 
-  if (
-    !fcoreModule._puretests ||
-    fcoreModule._puretests.constructor !== Object
-  ) {
-    throw new Error(
-      `Missing \`${config.puretests}\` in \`${fcoreModuleName}\`.\nSee docs.`
-    );
-  }
-
-  switch (_mode) {
-    case "isPureExpression":
-      return fcoreModule._puretests._run2();
-    case "returnsValue":
-      return fcoreModule._puretests._run3();
-    case "hasArgs":
-      return fcoreModule._puretests._hasArgs();
-    default:
-      return fcoreModule._puretests._run();
-  }
+  return fcoreModule._puretests._run(_mode);
 }
 
 // Alternate version of puretest
@@ -62,25 +50,28 @@ function runPuretests4(fcoreModuleName) {
   return runPuretests(fcoreModuleName, "hasArgs");
 }
 
-// Get all names of methods of an object
-function getMethods(obj) {
+/**
+ * Get all names of methods of a given object
+ * @param {Object} obj object
+ * @returns list of names of methods on the object
+ */
+function methodsOf(obj) {
   return Object.getOwnPropertyNames(obj).filter(
     (prop) => obj[prop].constructor === Function
   );
 }
 
 /**
- * reference error
+ * Get the name of the undefined reference which caused a ReferenceError
  * @param {ReferenceError} referenceError
- * @returns name of the reference which is not defined
+ * @returns name of reference
  */
 function getReferenceFromError(referenceError) {
   if (referenceError.name !== "ReferenceError")
     throw new TypeError("argument must be a ReferenceError");
 
-  const errMsg = referenceError.message;
-  if (errMsg.includes("is not defined")) {
-    return errMsg.split(" ")[0];
+  if (referenceError.message.includes("is not defined")) {
+    return referenceError.message.split(" ")[0]; // the first word is the name
   }
 }
 

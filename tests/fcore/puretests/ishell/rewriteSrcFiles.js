@@ -15,23 +15,22 @@ function rewriteSrcFiles(files, fromDir, toDir, depsPerFile) {
   files.forEach((file, iFile) => {
     const inputFile = path.join(fromDir, file);
     const outputFile = path.join(toDir, file);
-    const fileDependencies = depsPerFile.length > 0 ? depsPerFile[iFile] : [];
-    rewriteSrcFile(inputFile, outputFile, fileDependencies);
+    rewriteSrcFile(inputFile, outputFile, depsPerFile[iFile]);
   });
 }
 
 /**
  * Re-write file's source code so that its functions run in isolated sandboxes.
- * @param {String} inputFilename input filepath
- * @param {String} outputFilename output filepath
+ * @param {String} inputFile input filepath
+ * @param {String} outputFile output filepath
  * @param {Array<String>} dependencies names of dependencies to inject into sandbox
  */
-function rewriteSrcFile(inputFilename, outputFilename, dependencies) {
-  const sourceCode = fs.readFileSync(inputFilename, "utf8");
+function rewriteSrcFile(inputFile, outputFile, dependencies) {
+  const sourceCode = fs.readFileSync(inputFile, "utf8");
   const rewrittenSourceCode = isolateFunctions(sourceCode, dependencies);
 
-  fs.mkdirSync(path.dirname(outputFilename), { recursive: true });
-  fs.writeFileSync(outputFilename, rewrittenSourceCode, "utf8");
+  fs.mkdirSync(path.dirname(outputFile), { recursive: true });
+  fs.writeFileSync(outputFile, rewrittenSourceCode, "utf8");
 }
 
 module.exports = rewriteSrcFiles;

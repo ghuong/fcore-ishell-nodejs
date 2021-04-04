@@ -100,20 +100,20 @@ function puretest(_functionToTest, ..._args) {
       }
       return this;
     },
-    _run: function (_mode = false) {
+    _run: function (mode) {
       const pure = []; // names of the functions that pass their test
       const impure = []; // names of the functions that fail their test
       const errors = []; // errors thrown by the functions that fail their test
 
       // run each test case
       this._testcases.forEach((testcase) => {
-        if (_mode === "isPureExpression" && !isExpression(testcase.func))
+        if (mode === "isPureExpression" && !isExpression(testcase.func))
           return; // skip function declarations
 
         // if test throws an error, it fails, otherwise it passes
         let error;
 
-        switch (_mode) {
+        switch (mode) {
           case "isPureExpression":
             error = testcase.run2();
             break;
@@ -136,15 +136,6 @@ function puretest(_functionToTest, ..._args) {
       });
 
       return { pure, impure, errors };
-    },
-    _run2: function () {
-      return this._run("isPureExpression");
-    },
-    _run3: function() {
-      return this._run("returnsValue");
-    },
-    _hasArgs: function() {
-      return this._run("hasArgs");
     },
     _hasTestFor: function(method) {
       return this._testcases.find((testcase) => testcase.name === method);
