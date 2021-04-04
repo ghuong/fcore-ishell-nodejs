@@ -4,6 +4,7 @@ const path = require("path");
 const config = require("./ishell/config");
 const fsHelper = require("./ishell/fsHelper");
 const testHelper = require("./ishell/testHelper");
+const { runPuretests, runPuretestsInModule } = require("./ishell/runPuretests");
 const rewriteSrcFiles = require("./ishell/rewriteSrcFiles");
 
 describe("every function in fcore/", () => {
@@ -16,57 +17,14 @@ describe("every function in fcore/", () => {
     fcoreFilepaths = fcoreFiles.map((f) => path.join(config.fcoreDir, f));
   });
 
-  function runPuretests(files, tester) {
-    const pureFuncsPerFile = files.map((x) => []);
-    const impureFuncsPerFile = files.map((x) => []);
-    const errorsPerFile = files.map((x) => []);
-
-    // Test all the modules one last time
-    files.forEach((file, iFile) => {
-      const { pure, impure, errors } = tester(file);
-
-      pureFuncsPerFile[iFile] = pure;
-      impureFuncsPerFile[iFile] = impure;
-      errorsPerFile[iFile] = errors;
-
-      if (impure.length > 0) allPure = false;
-    });
-
-    const successMsg = pureFuncsPerFile
-      .map((pureInFile, iFile) => {
-        if (pureInFile.length === 0) return "";
-
-        const delim = "\n ✅ ";
-        const pureFuncs = delim + pureInFile.join(delim);
-        return `${fcoreFiles[iFile]}:${pureFuncs}\n\n`;
-      })
-      .join("");
-
-    // Fail if there are still impure functions remaining
-    const failMsg = impureFuncsPerFile
-      .map((impureInFile, iFile) => {
-        if (impureInFile.length === 0) return "";
-
-        const delim = "\n ❌ ";
-        const impureFuncs =
-          delim +
-          impureInFile
-            .map((impureFunc, iImp) => {
-              const error = errorsPerFile[iFile][iImp];
-              return `\`${impureFunc}\` threw: ${error}`;
-            })
-            .join(delim);
-        return `${fcoreFiles[iFile]}:${impureFuncs}\n\n`;
-      })
-      .join("");
-
-    return { successMsg, failMsg };
-  }
-
   it("takes at least one argument", () => {
     console.log("\nTest: it takes at least one argument");
 
-    const { failMsg } = runPuretests(fcoreFilepaths, testHelper.runPuretests4);
+    const { failMsg } = runPuretests(
+      fcoreFilepaths,
+      fcoreFiles,
+      config.testModes.hasArgs
+    );
 
     if (failMsg) {
       const fullFailMsg = `\n\nThese functions can be called with zero arguments:\n\n${failMsg}`;
@@ -77,7 +35,11 @@ describe("every function in fcore/", () => {
   it("returns a value", () => {
     console.log("\nTest: it returns a value");
 
-    const { failMsg } = runPuretests(fcoreFilepaths, testHelper.runPuretests3);
+    const { failMsg } = runPuretests(
+      fcoreFilepaths,
+      fcoreFiles,
+      config.testModes.returnsValue
+    );
 
     if (failMsg) {
       const fullFailMsg = `\n\nThese functions did not return a value:\n\n${failMsg}`;
@@ -128,7 +90,7 @@ describe("every function in fcore/", () => {
 
       // test each rewritten module
       sandboxedModules.forEach((file, iFile) => {
-        const { pure, errors } = testHelper.runPuretests(file);
+        const { pure, errors } = runPuretestsInModule(file);
 
         errors.forEach((error) => {
           if (error.name === "ReferenceError") {
@@ -156,10 +118,7 @@ describe("every function in fcore/", () => {
       });
     } while (numPureFuncsFoundThisIteration > 0);
 
-    const { successMsg, failMsg } = runPuretests(
-      sandboxedModules,
-      testHelper.runPuretests
-    );
+    const { successMsg, failMsg } = runPuretests(sandboxedModules, fcoreFiles);
 
     if (failMsg) {
       const fullFailMsg = `\n\nThese functions failed to run in isolated VM sandboxes:\n\n${failMsg}The re-written source code can be found in fcore/.rewrite/\n`;
@@ -175,7 +134,8 @@ describe("every function in fcore/", () => {
 
     const { successMsg, failMsg } = runPuretests(
       fcoreFilepaths,
-      testHelper.runPuretests2
+      fcoreFiles,
+      config.testModes.isPureExpression
     );
 
     if (failMsg) {
